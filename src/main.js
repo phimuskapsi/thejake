@@ -5,6 +5,7 @@ import VueRouter from 'vue-router';
 
 import CurrentJake from './components/CurrentJake';
 import HistoricalJakes from './components/HistoricalJakes';
+
 //import MainContent from './components/MainContent';
 // Main project plugins
 import '@fortawesome/fontawesome-free/css/all.min.css';

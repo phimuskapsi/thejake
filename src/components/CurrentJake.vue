@@ -68,15 +68,25 @@
         <v-col>
           <v-select
             :items="seasons"
+            :v-model="selectedSeason"
             label="Season: "
             solo
           ></v-select>
         </v-col>
-      </v-row>
-       <v-row>
         <v-col>
           <v-select
-            :items="seasonWeeks()"
+            :items="seasonTypes"
+            :v-model="selectedSeasonType" 
+            label="Type:"
+            solo
+          ></v-select>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col>
+          <v-select
+            :items="weeks"
+            :v-model="selectedWeek"
             label="Weeks "
             solo
           ></v-select>
@@ -84,29 +94,19 @@
       </v-row>
       <v-row>
         <v-col>
-          
-
-          <v-tabs vertical>
-            <v-tab v-for="year in seasons" :key="year">
-              {{ year }}
-            </v-tab>
-            <v-tab-item v-for="year in seasons" :key="year">
-              <v-tabs>
-                <v-tab v-for="week in seasonWeeks()" :key="week">
-                  Week #{{ week }}              
-                </v-tab>
-                
-                <v-tab-item v-for="week in seasonWeeks()" :key="week">
-                  <v-data-table
-                    :headers="headers"
-                    :items="history[selectedSeason][selectedWeek]"
-                    :items-per-page="25"
-                    class="elevation-1"
-                  ></v-data-table>
-                </v-tab-item>
-              </v-tabs>
-            </v-tab-item>
-          </v-tabs>
+          <div class="my-2">
+            <v-btn text small color="primary" :v-on:click="getHistory()">Load History</v-btn>
+          </div>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col>                
+          <v-data-table
+            :headers="headers"
+            :items="selectedHistory"
+            :items-per-page="25"
+            class="elevation-1"
+          ></v-data-table>              
         </v-col>
       </v-row>       
     </v-container>
@@ -116,7 +116,8 @@
 <script>
   // import HistoricalJakes from './HistoricalJakes';
   import NFLData from '../plugins/nflData.js';
-
+  import * as moment from 'moment'
+  
   export default {
     components: {  },
     data () {
@@ -125,10 +126,10 @@
         currentSeason: moment().format('YYYY'),        
         players: [],
         jakes: [],
+        showHistoryTable: false,
         showJakeRankings: false,
         history: [],
         NFLData: new NFLData(),
-        showHistory: false,
         headers: [
           {
             text: 'Player',
@@ -140,41 +141,81 @@
         ],
         seasons: [],
         weeks: [],
-        seasonType: 'REG',
+        seasonTypes: [
+          { text: 'Preseason', value: 'PRE' },
+          { text: 'Regular Season', value: 'REG' },
+          { text: 'Post-season', value: 'POST' }],
+        selectedHistory: [],
+        selectedSeasonType: 'REG',
         selectedSeason: 0,
-        selectedWeek: 0
+        selectedWeek: 1
       }
     },    
     created () {
-      this.setupData();
-      this.getJakes().then(()=>{
-        this.getHistory();
-      });
-      //
-    },    
-    methods: {      
+      
+    }, 
+    mounted () {
+      this.setupData().then(() => {
+        this.prepSeason();
+        this.getJakes();
+      })
+    },
+    methods: {
+      prepSeason () {
+        let maxWeeks = 17;
+
+        if (this.currentSeason === this.selectedSeason) {
+          maxWeeks = this.currentWeek;
+        }
+
+        this.weeks = [];
+        for (let w=1;w<=maxWeeks;w++) {
+          this.weeks.push(w);
+        }        
+      },
       async getJakes () {
-        //var self = this;
-        var currentWeek = 
-        var weekData = await this.NFLData.getJakes();
+        //var self = this;      
+
+        var weekData = await this.NFLData.getJakes(this.NFLData.season, this.NFLData.week);
         //eslint-disable-next-line
         //console.log('weekData:', weekData);
 
         this.players = Object.assign([], weekData);
-        this.history[this.NFLData.season][this.NFLData.week] = this.players;        
+        this.history[this.NFLData.season][this.NFLData.week].players = this.players;        
         this.jakes = this.players.slice(0,4);          
         if (this.jakes) {
           this.showJakeRankings = true;
         }
       },
       async getHistory () {
-        //var self = this;      
+        var self = this;
         
-      },
+        if (self.selectedSeason > 0 && self.selectedWeek > 0) {
+          if (self.history[self.selectedSeason][self.selectedWeek].players.length > 0) {
+            self.selectedHistory = self.history[self.selectedSeason][self.selectedWeek].players;
+            self.showHistoryTable = true;
+          } else {
+            let weekData = await this.NFLData.getJakes(self.selectedSeason, self.selectedWeek);
+            self.history[self.selectedSeason][self.selectedWeek].players = weekData;
+            self.showHistoryTable = true;
+          }
+
+          return;
+        }
+
+        self.showHistoryTable = false;
+        return;
+      },      
       async setupData () {   
         let season       = this.currentSeason;
         let month        = parseInt(moment().format('MM'));
-        this.currentWeek = await this.NFLData.getCurrentWeek();
+
+        await this.NFLData.init();
+        this.currentWeek = this.NFLData.week;
+        this.selectedSeason = this.currentSeason;
+        this.selectedWeek = this.currentWeek;
+
+        let maxWeek = this.currentWeek;
 
         if (month < 3) {
           season--;
@@ -185,7 +226,7 @@
           this.history[y] = [];
           this.seasons.push(y);
 
-          if (y < season) maxWeek = 17;
+          if (y < season) maxWeek = 17;          
           for (let w=1;w<=maxWeek;w++) {
             if (typeof this.weeks[w] === 'undefined') this.weeks.push(w);            
             this.history[y][w] = {                
@@ -193,20 +234,6 @@
             };              
           }         
         }
-      },
-      visibleWeeks () {
-        let weeks = [];
-        for(let w=17;w>=1;w--) {          
-          if (parseInt(this.NFLData.season) === this.selectedSeason) {
-            if (w <= this.NFLData.week) {
-              weeks.push(w);
-            }
-          } else {
-            weeks = this.regWeeks;
-          }          
-        }
-
-        return weeks;
       }
     }
   }

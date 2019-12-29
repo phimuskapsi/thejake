@@ -22,11 +22,16 @@ export default class NFLData {
     
   }
 
-  async getJakes (y = 0, w = 0, g = 0) {
+  async init () {
+    var self = this;
+    self.week = await self.getCurrentWeek();
+  }
+
+  async getJakes (y = 0, w = 0, g = 0) {    
     var self = this;
     var players = [];
-
-    await self.getHistoricalDataFromAPI(self.season, self.week);
+    
+    await self.getHistoricalDataFromAPI(y, w);
     players = self.parseWeekData();
 
     if (players.length > 0) { 
@@ -52,9 +57,10 @@ export default class NFLData {
       //eslint-disable-next-line
       //console.log('starting season: ', year.toString());        
       const schedule = await axios.post(scheduleURL, scheduleData);
-      if (schedule.length > 0) {        
-        for (let g=0;g<schedule.length;g++) {
-          let game = schedule[g];
+      if (schedule.data.length > 0) {        
+        let sdata = schedule.data;
+        for (let g=0;g<sdata.length;g++) {
+          let game = sdata[g];
           if (cWeek !== game.week) {
             cWeek = game.week;
           } else {
