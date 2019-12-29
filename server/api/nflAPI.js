@@ -1,53 +1,76 @@
 //import axios from 'axios';
-import * as moment from 'moment';
-
-export default class NFLAPI {
+const moment  = require('moment');
+const fetch = require("node-fetch");
+class NFLAPI {
   constructor() {
     this.currentYear = parseInt(moment().format("YYYY"));
     this.feedBaseURL = 'https://feeds.nfl.com/feeds-rs/';
-    this.schedules = [];
-    this.preSeasons = [];
-    this.regSeasons = [];
-    this.postSeasons = [];
+    this.schedules = {};
+    this.preSeasons = {};
+    this.regSeasons = {};
+    this.postSeasons = {};
     this.players = [];
     this.teams = [];
     this.games = [];
   }
 
   init() {
-
+    // eslint-disable-next-line
+    console.log('Filling DB for 2005 ----> 2019 seasons. Hold on to your butts!');
+    this.fillDB().then((result) => {
+      //eslint-disable-next-line
+      console.log('Result: ', result);
+    });
   }
 
   async fillDB() {
     // Lets start by getting all the team data
     var teamResp = await fetch(this.feedBaseURL + 'teams/' + this.currentYear.toString() + '.json');
-    var teamJSON = teamResp.json();
-    var teamsDone = await this.teamSetup(teamJSON.teams);
+    var teamJSON = await teamResp.json();
+
+    //console.log('team json:', teamJSON);
+    //return;
+    //var teamsDone = await this.teamSetup(teamJSON.teams);
+    let teamsDone = true;
 
     if (teamsDone) {
       // eslint-disable-next-line
-      console.log('Team building complete!');
-      for (let y = 2001; y <= this.currentYear; y++) {
+      //console.log('Team building complete!');
+      for (let y = 2011; y <= 2017; y++) {
         //        
-        let rosterRes = await this.rosterSetup(y, teamJSON.teams);
+        let rosterRes = true;       
+        //rosterRes = await this.rosterSetup(y, teamJSON.teams);
+        
+        //let rosterRes = true;
         if (!rosterRes) {
           // eslint-disable-next-line
           console.log('Failed to retrieve roster(s).');
+          return;
         }
+
+        // eslint-disable-next-line
+        console.log('Rosters complete for ' + y.toString());
 
         // Then we'll get all the game data
         let res = await this.getSchedule(y);
         if (!res) {
           // eslint-disable-next-line
           console.log('Failed to retrieve schedule data for year: ' + y.toString());
+          return;
         }
-      }
+        
+        // eslint-disable-next-line
+        console.log('Retrieved schedule for ' + y.toString());
+      }      
 
       // Should have all the schedules for all years now stored.
       for (var year in this.schedules) {
         if (typeof this.preSeasons[year] === 'undefined') this.preSeasons[year] = [];
+        if (typeof this.regSeasons[year] === 'undefined') this.regSeasons[year] = [];
+        if (typeof this.postSeasons[year] === 'undefined') this.postSeasons[year] = [];
         let yearData = this.schedules[year];
 
+        /*
         for (var preweek in yearData.pre) {
           if (typeof this.preSeasons[year][preweek] === 'undefined') this.preSeasons[year][preweek] = [];
 
@@ -66,7 +89,9 @@ export default class NFLAPI {
             }
           }
         }
+        */
 
+        
         for (var regweek in yearData.reg) {
           if (typeof this.regSeasons[year][regweek] === 'undefined') this.regSeasons[year][regweek] = [];
 
@@ -79,12 +104,16 @@ export default class NFLAPI {
 
             if (gameAdded) {
               // eslint-disable-next-line
+              /*
               console.log('Added game: ' + gameData.gameSchedule.homeTeamAbbr +
                 ' vs. ' + gameData.gameSchedule.visitorTeamAbbr + '. Week ' +
-                gameData.gameSchedule.week + ' in ' + gameData.gameSchedule.season);
+                gameData.gameSchedule.week + ' in ' + gameData.gameSchedule.season); */
             }
           }
         }
+
+        // eslint-disable-next-line
+        console.log('Regular Season: ' + year.toString() + ' is complete.');
 
         for (var postweek in yearData.post) {
           if (typeof this.postSeasons[year][postweek] === 'undefined') this.postSeasons[year][postweek] = [];
@@ -98,15 +127,21 @@ export default class NFLAPI {
 
             if (gameAdded) {
               // eslint-disable-next-line
+              /*
               console.log('Added game: ' + gameData.gameSchedule.homeTeamAbbr +
                 ' vs. ' + gameData.gameSchedule.visitorTeamAbbr + '. Week ' +
-                gameData.gameSchedule.week + ' in ' + gameData.gameSchedule.season);
+                gameData.gameSchedule.week + ' in ' + gameData.gameSchedule.season);*/
             }
           }
         }
-
-
+        
+        // eslint-disable-next-line
+        console.log('Post Season: ' + year.toString() + ' is complete.');
       }
+
+      return 'Added all data OK, probably.';
+    } else {
+      return 'Teams failed.'
     }
   }
 
@@ -128,22 +163,26 @@ export default class NFLAPI {
 
       let gameReq = await fetch('http://lvh.me:3000/api/v1/add/game/main', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(gameInitData)
       });
 
-      let gameResp = gameReq.json();
+      let gameResp = await gameReq.json();
       if (gameResp.success) {
 
-        let aggregatesDone = await this.gameAggregateSetup(gameData, seasonType);
-        // let defensiveDone = await this.gameDefensiveSetup(gameData, seasonType);
-        let fumblesDone = await this.gameFumblesSetup(gameData, seasonType);
-        //let kickingDone = await this.gameKickingSetup(gameData, seasonType);
-        let passingDone = await this.gamePassingSetup(gameData, seasonType);
-        //let puntingDone = await this.gamePuntingSetup(gameData, seasonType);
-        //let receivingDone = await this.gameReceivingSetup(gameData, seasonType);
-        //let returnDone = await this.gameReturnSetup(gameData, seasonType);
-        //let rushingDone = await this.gameRushingSetup(gameData, seasonType);
-        let done = (aggregatesDone && fumblesDone && passingDone);
+        //let aggregatesDone = await this.gameAggregateSetup(gameData, seasonType);
+        let defensiveDone = await this.gameDefensiveSetup(gameData, seasonType);
+        //let fumblesDone = await this.gameFumblesSetup(gameData, seasonType);
+        let kickingDone = await this.gameKickingSetup(gameData, seasonType);
+        //let passingDone = await this.gamePassingSetup(gameData, seasonType);
+        let puntingDone = await this.gamePuntingSetup(gameData, seasonType);
+        let receivingDone = await this.gameReceivingSetup(gameData, seasonType);
+        let returnDone = await this.gameReturnSetup(gameData, seasonType);
+        let rushingDone = await this.gameRushingSetup(gameData, seasonType);
+        let done = (defensiveDone && kickingDone && puntingDone && receivingDone && returnDone && rushingDone);
 
         return done;
       }
@@ -170,6 +209,10 @@ export default class NFLAPI {
 
     let aggReqHome = await fetch('http://lvh.me:3000/api/v1/add/game/aggregate', {
       method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
       body: JSON.stringify(aggregateHomeData)
     });
 
@@ -184,6 +227,10 @@ export default class NFLAPI {
 
     let aggReqVisitor = await fetch('http://lvh.me:3000/api/v1/add/game/aggregate', {
       method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
       body: JSON.stringify(aggregateVisitorData)
     });
 
@@ -222,6 +269,10 @@ export default class NFLAPI {
       homeDefensiveData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/defensive', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homeDefensiveData)
       });
 
@@ -245,6 +296,10 @@ export default class NFLAPI {
       visitorDefensiveData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/defensive', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorDefensiveData)
       });
 
@@ -282,6 +337,10 @@ export default class NFLAPI {
       homeFumblesData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/fumbles', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homeFumblesData)
       });
 
@@ -305,6 +364,10 @@ export default class NFLAPI {
       visitorFumblesData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/fumbles', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorFumblesData)
       });
 
@@ -344,6 +407,10 @@ export default class NFLAPI {
       homeKickingData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/kicking', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homeKickingData)
       });
 
@@ -367,6 +434,10 @@ export default class NFLAPI {
       visitorKickingData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/kicking', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorKickingData)
       });
 
@@ -404,6 +475,10 @@ export default class NFLAPI {
       homePassingData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/passing', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homePassingData)
       });
 
@@ -427,6 +502,10 @@ export default class NFLAPI {
       visitorPassingData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/passing', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorPassingData)
       });
 
@@ -466,6 +545,10 @@ export default class NFLAPI {
       homePuntingData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/punting', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homePuntingData)
       });
 
@@ -489,6 +572,10 @@ export default class NFLAPI {
       visitorPuntingData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/punting', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorPuntingData)
       });
 
@@ -528,6 +615,10 @@ export default class NFLAPI {
       homeReceivingData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/receiving', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homeReceivingData)
       });
 
@@ -551,6 +642,10 @@ export default class NFLAPI {
       visitorReceivingData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/receiving', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorReceivingData)
       });
 
@@ -588,6 +683,10 @@ export default class NFLAPI {
       homeReturnData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/return', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homeReturnData)
       });
 
@@ -611,6 +710,10 @@ export default class NFLAPI {
       visitorReturnData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/return', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorReturnData)
       });
 
@@ -650,6 +753,10 @@ export default class NFLAPI {
       homeRushingData.playerId = hdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/rushing', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(homeRushingData)
       });
 
@@ -673,6 +780,10 @@ export default class NFLAPI {
       visitorRushingData.playerId = vdPlayer.nflId;
       await fetch('http://lvh.me:3000/api/v1/add/game/rushing', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(visitorRushingData)
       });
 
@@ -681,36 +792,41 @@ export default class NFLAPI {
   }
 
   async getSchedule(y = 2001) {
-    var games = {
-      pre: [],
-      reg: [],
-      post: []
-    };
+    
 
     if (y > 2000) {
       const response = await fetch(this.feedBaseURL + 'schedules/' + y.toString() + '.json');
-      const schedule = response.json();
+      const schedule = await response.json();
 
       if (typeof(schedule.gameSchedules) !== 'undefined') {
         if (schedule.gameSchedules.length > 0) {
-          if (this.schedules[y] === 'undefined') this.schedules[y] = [];
-
+          if (typeof(this.schedules[y]) === 'undefined') this.schedules[y] = [];
+          var games = {
+            pre: {},
+            reg: {},
+            post: {}
+          };
           // Parse all the weeks in the schedule.
           schedule.gameSchedules.forEach((game) => {
             let st = game.seasonType.toLowerCase();
-            if (typeof games[st][game.week] === 'undefined') games[st][game.week] = [];
-            // Skip the HoF game, b/c who the hell cares.
-            if (game.seasonType === 'PRE' && parseInt(game.week) === 0) return;
+            if (st !== 'pro') {
+            //console.log(st + ": " + game.week.toString());
+              if (typeof games[st][game.week] === 'undefined') games[st][game.week] = [];
+              // Skip the HoF game, b/c who the hell cares.
+              if (game.seasonType === 'PRE' && parseInt(game.week) === 0) return;
 
-            games[st][game.week].push(game.gameId);
+              games[st][game.week].push(game.gameId);
+            }
           });
 
-          this.schedules[y].push(games);
+          this.schedules[y] = games;
         }
       }
+      //console.log('schedule:', schedule);
+      //console.log('schedules:', this.schedules);
     }
-
-    return false;
+    
+    return Object.keys(this.schedules).length > 0;
   }
 
   async rosterSetup(rosterYear, teamData) {
@@ -720,7 +836,7 @@ export default class NFLAPI {
     for (var t = 0; t < teamData.length; t++) {
       let team = teamData[t];
       let req = await fetch(this.feedBaseURL + 'roster/' + team.teamId + '/' + rosterYear.toString() + '.json');
-      let resp = req.json();
+      let resp = await req.json();
 
       let roster = resp.teamPlayers;
       for (let r = 0; r < roster.length; r++) {
@@ -739,10 +855,19 @@ export default class NFLAPI {
 
         let insertReq = await fetch('http://lvh.me:3000/api/v1/add/player', {
           method: 'post',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(playerData)
         });
 
-        if (insertReq.json().success) success++;
+        let ret = await insertReq.json();
+        if (ret.success) {
+          success++;
+          //eslint-disable-next-line
+          //console.log('Added player: ' + player.displayName + ' - ' + player.position + ' to player DB.');
+        }
       }
 
       // eslint-disable-next-line
@@ -770,14 +895,30 @@ export default class NFLAPI {
         yearFound: team.yearFound
       };
 
+      //console.log('teamModified', teamModified);
+      //console.log('teamData', teamData);
+      //console.log('team', team);
+
+      //return ret;
+
       let req = await fetch('http://lvh.me:3000/api/v1/add/team', {
         method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(teamModified)
       });
 
-      if (req.json().success) {
+      let ret = await req.json();
+      //console.log('ret', ret);
+      //return ret;
+
+      
+
+      if (ret.success) {
         success++;
-        // eslint-disable-next-line
+        //eslint-disable-next-line
         console.log('Added team: ' + team.abbr + ' to teams DB.');
       }
     }
@@ -785,3 +926,6 @@ export default class NFLAPI {
     return success === teamData.length;
   }
 }
+
+var NFL = new NFLAPI();
+NFL.init();
