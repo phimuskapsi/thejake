@@ -16,11 +16,70 @@ class NFLAPI {
 
   init() {
     // eslint-disable-next-line
-    console.log('Filling DB for 2005 ----> 2019 seasons. Hold on to your butts!');
+    //console.log('Filling DB for 2011 ----> 2012 seasons. Hold on to your butts!');
+    /*
     this.fillDB().then((result) => {
       //eslint-disable-next-line
       console.log('Result: ', result);
+    }); */
+    // eslint-disable-next-line
+    console.log('Fixing Games...');
+    this.fixGames().then((result) => {
+      console.log('Result: ', result);
     });
+  }
+
+  async fixGames() {
+    // Due to an oversight...I have to add in a bunch of game stats.    
+    let gamesReq = await fetch('http://lvh.me:3000/api/v1/get/games/all');
+    let gjson = await gamesReq.json();
+    let games = gjson.games;
+
+    for (let g=0;g<games.length;g++) {
+      let game = games[g];
+      let gameReq = await fetch(this.feedBaseURL + 'boxscore/' + game.gameId.toString() + '.json');
+      var gameBox = await gameReq.json();
+
+      var gameObj = {        
+        homeWin: parseInt(gameBox.score.homeTeamScore.pointTotal) > parseInt(gameBox.score.visitorTeamScore.pointTotal),
+        visitorWin: parseInt(gameBox.score.visitorTeamScore.pointTotal) > parseInt(gameBox.score.homeTeamScore.pointTotal)
+      };
+
+      //eslint-disable-next-line
+      console.log('Fixing game for season: ' + game.season + ' week: ' + game.week);
+
+      var scoreObj = {
+        gameId: game.gameId,
+        phase: gameBox.score.phase,
+        homePointTotal: gameBox.score.homeTeamScore.pointTotal,
+        homePointQ1: gameBox.score.homeTeamScore.pointQ1,
+        homePointQ2: gameBox.score.homeTeamScore.pointQ2,
+        homePointQ3: gameBox.score.homeTeamScore.pointQ3,
+        homePointQ4: gameBox.score.homeTeamScore.pointQ4,
+        visitorPointTotal: gameBox.score.visitorTeamScore.pointTotal,
+        visitorPointQ1: gameBox.score.visitorTeamScore.pointQ1,
+        visitorPointQ2: gameBox.score.visitorTeamScore.pointQ2,
+        visitorPointQ3: gameBox.score.visitorTeamScore.pointQ3,
+        visitorPointQ4: gameBox.score.visitorTeamScore.pointQ4
+      };
+
+      let dataPack = {
+        game: gameObj,
+        score: scoreObj,
+        id: game.id
+      };
+
+      let gameUpdReq = await fetch('http://lvh.me:3000/api/v1/add/game/score', {
+        method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataPack)
+      });
+
+      let gameUpdResp = await gameUpdReq.json();
+    }
   }
 
   async fillDB() {
@@ -36,7 +95,11 @@ class NFLAPI {
     if (teamsDone) {
       // eslint-disable-next-line
       //console.log('Team building complete!');
-      for (let y = 2011; y <= 2017; y++) {
+
+      // NOTE: Something broke after 2013 so latter stats are not complete yet!!
+
+
+      for (let y = 2013; y <= 2014; y++) {
         //        
         let rosterRes = true;       
         //rosterRes = await this.rosterSetup(y, teamJSON.teams);
@@ -49,7 +112,7 @@ class NFLAPI {
         }
 
         // eslint-disable-next-line
-        console.log('Rosters complete for ' + y.toString());
+        //console.log('Rosters complete for ' + y.toString());
 
         // Then we'll get all the game data
         let res = await this.getSchedule(y);
@@ -161,6 +224,8 @@ class NFLAPI {
         visitorTeamId: gameData.gameSchedule.visitorTeamId,
       };
 
+      
+
       let gameReq = await fetch('http://lvh.me:3000/api/v1/add/game/main', {
         method: 'post',
         headers: {
@@ -171,19 +236,19 @@ class NFLAPI {
       });
 
       let gameResp = await gameReq.json();
-      if (gameResp.success) {
+      if (true) {
 
-        //let aggregatesDone = await this.gameAggregateSetup(gameData, seasonType);
-        let defensiveDone = await this.gameDefensiveSetup(gameData, seasonType);
-        //let fumblesDone = await this.gameFumblesSetup(gameData, seasonType);
-        let kickingDone = await this.gameKickingSetup(gameData, seasonType);
-        //let passingDone = await this.gamePassingSetup(gameData, seasonType);
-        let puntingDone = await this.gamePuntingSetup(gameData, seasonType);
-        let receivingDone = await this.gameReceivingSetup(gameData, seasonType);
-        let returnDone = await this.gameReturnSetup(gameData, seasonType);
-        let rushingDone = await this.gameRushingSetup(gameData, seasonType);
-        let done = (defensiveDone && kickingDone && puntingDone && receivingDone && returnDone && rushingDone);
-
+        let aggregatesDone = await this.gameAggregateSetup(gameData, seasonType);
+        //let defensiveDone = await this.gameDefensiveSetup(gameData, seasonType);
+        let fumblesDone = await this.gameFumblesSetup(gameData, seasonType);
+        //let kickingDone = await this.gameKickingSetup(gameData, seasonType);
+        let passingDone = await this.gamePassingSetup(gameData, seasonType);
+        //let puntingDone = await this.gamePuntingSetup(gameData, seasonType);
+        //let receivingDone = await this.gameReceivingSetup(gameData, seasonType);
+        //let returnDone = await this.gameReturnSetup(gameData, seasonType);
+        //let rushingDone = await this.gameRushingSetup(gameData, seasonType);
+        //let done = (defensiveDone && kickingDone && puntingDone && receivingDone && returnDone && rushingDone);
+        let done = aggregatesDone && fumblesDone && passingDone;
         return done;
       }
     }
@@ -792,8 +857,6 @@ class NFLAPI {
   }
 
   async getSchedule(y = 2001) {
-    
-
     if (y > 2000) {
       const response = await fetch(this.feedBaseURL + 'schedules/' + y.toString() + '.json');
       const schedule = await response.json();

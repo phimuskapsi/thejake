@@ -50,6 +50,27 @@ async function queryDB(query, params, res){
   }
 }
 
+router.get('/get/passing/:season/:week', async (req, res) => {
+  try {
+    var seasonsQuery = `SELECT g.* FROM games`;
+
+    var seasons = await queryDB(seasonsQuery, [], res);
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.get('/get/games/all', async (req, res) => {
+  try {
+    var gamesQuery = `SELECT g.* FROM nfl.games g WHERE g.season = 2019 ORDER BY g.gameId `;
+    var games = await queryDB(gamesQuery, [], res);
+
+    res.json({done: true, success: true, games: games });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
 router.post('/add/game/main', async (req, res) => {
   try {
     var gameData = req.body;
@@ -210,6 +231,39 @@ router.post('/add/game/rushing', async (req, res) => {
   }
 });
 
+router.post('/add/game/score', async (req, res) => {
+  try {
+    var scoreData = req.body;
+    var gamesQuery = getKeysAndValuesForUpdate(scoreData.game);
+    var scoreQueryData = getKeysAndValues(scoreData.score);
+    var id = scoreData.id;
+
+    let gamesquery = `UPDATE nfl.games
+                       SET ${gamesQuery.sql} 
+                      WHERE id = ${id};`;
+
+    await queryDB(gamesquery, gamesQuery.params, res);  
+
+    let scorequery = `INSERT INTO nfl.games_score
+                        (${scoreQueryData.keysSQL}) 
+                      VALUES (${scoreQueryData.valsSQL});`;
+
+    await queryDB(scorequery, scoreQueryData.params, res);  
+    res.json({done: true, success: true });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.post('add/jakes/', async (req, res) => {
+  try {
+    
+
+    res.json({done: true, success: true });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
 
 router.post('/add/team', async (req, res) => {
   try {
@@ -246,7 +300,7 @@ router.post('/add/player', async (req, res) => {
   }
 });
 
-router.post('/update/game', async (req, res) => {
+router.post('/update/games', async (req, res) => {
   try {
     var teamData = req.body;
     var queryData = getKeysAndValues(teamData);
@@ -255,7 +309,28 @@ router.post('/update/game', async (req, res) => {
   } catch (err) {
     res.status(500).json(error);
   }
-})
+});
+
+function getKeysAndValuesForUpdate(obj){
+  //console.log(obj);
+  //var keys = Object.keys(obj).join(',');
+  //var vals = [];
+  //var params = [];
+  var keys = Object.keys(obj);
+  var params = [];
+  var updates = [];
+
+  keys.forEach((k) => {
+    let updateString = `${k} = ?`;
+    updates.push(updateString);
+    params.push(obj[k]);
+  });
+
+  return {
+    sql: updates.join(","),
+    params: params 
+  };
+}
 
 function getKeysAndValues(obj){
   //console.log(obj);
