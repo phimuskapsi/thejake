@@ -257,7 +257,110 @@ router.post('/add/game/score', async (req, res) => {
 
 router.post('add/jakes/', async (req, res) => {
   try {
-    
+    for(var s=2001;s<2020;s++) {
+      let homePlayersQuery = `SELECT g.season, g.week, g.gameDate, score.homePointTotal, player.nflId, player.displayName, player.birthDate, team.nick,
+                                pass.passingAttempts, pass.passingCompletions, pass.passingInterceptions, pass.passingSacked,
+                                IF(g.season > 2008, fumble.fumblesLost, (fumble.fumbles - (fumble.teammateFumbleRecovery + fumble.opponentFumbleRecovery + fumble.fumblesOutbounds))) as calcFumLost
+                              FROM nfl.games g
+                                JOIN nfl.games_passing pass ON pass.gameId = g.gameId AND pass.teamId = g.homeTeamId
+                                JOIN nfl.games_aggregate agg ON agg.gameId = g.gameId AND agg.teamId = g.homeTeamId                            
+                                JOIN nfl.games_fumbles fumble ON fumble.gameId = g.gameId AND fumble.playerId = pass.playerId                            
+                                JOIN nfl.games_score score ON score.gameId = g.gameId
+                                JOIN nfl.players player ON player.nflId = pass.playerId and player.season = g.season
+                                JOIN nfl.teams team ON team.teamId = pass.teamId
+                              WHERE pass.passingAttempts > 7 AND pass.season = ${s} AND g.homeWin = 0 AND player.position = 'QB'
+                              GROUP BY g.season, g.week, pass.gameId, pass.playerId
+                              ORDER BY g.season, g.week`;
+
+      let vPlayersQuery =   `SELECT g.season, g.week, g.gameDate, score.visitorPointTotal, player.nflId, player.displayName, player.birthDate, team.nick,
+                              pass.passingAttempts, pass.passingCompletions, pass.passingInterceptions, pass.passingSacked,
+                              IF(g.season > 2008, fumble.fumblesLost, (fumble.fumbles - (fumble.teammateFumbleRecovery + fumble.opponentFumbleRecovery + fumble.fumblesOutbounds))) as calcFumLost
+                            FROM nfl.games g
+                              JOIN nfl.games_passing pass ON pass.gameId = g.gameId AND pass.teamId = g.visitorTeamId
+                              JOIN nfl.games_aggregate agg ON agg.gameId = g.gameId AND agg.teamId = g.visitorTeamId                            
+                              JOIN nfl.games_fumbles fumble ON fumble.gameId = g.gameId AND fumble.playerId = pass.playerId                            
+                              JOIN nfl.games_score score ON score.gameId = g.gameId
+                              JOIN nfl.players player ON player.nflId = pass.playerId and player.season = g.season
+                              JOIN nfl.teams team ON team.teamId = pass.teamId
+                            WHERE pass.passingAttempts > 7 AND pass.season = ${s} AND g.visitorWin = 0 AND player.position = 'QB'
+                            GROUP BY g.season, g.week, pass.gameId, pass.playerId
+                            ORDER BY g.season, g.week`;                              
+
+      let homeGameStats = await queryDB(homePlayersQuery, [], res);
+      let vGameStats = await queryDB(vPlayersQuery, [], res);
+      let jakes = {};
+      var fumLost = 0;
+      var ints = 0;
+      var multiplier = 0;
+      var jakeScore = 0;
+      var birthDate = '';
+      var gameDate = '';
+      var isBirthday = false
+      jakes[s] = {};
+
+      for(var h=0;h<homeGameStats.length;h++) {
+        let homeGamePlayer = homeGameStats[h];
+        fumLost = homeGamePlayer.calcFumLost;
+        ints = homeGamePlayer.passingInterceptions;
+        multiplier = 1/6;
+        jakeScore = (((fumLost + ints) * multiplier) * 100).toFixed(2);
+        birthDate = moment(homeGamePlayer.birthDate);
+        gameDate = moment(homeGamePlayer.gameDate);
+        isBirthday = birthDate.format('MM-DD') === gameDate.format('MM-DD');
+
+        if (jakeScore > 0) {        
+          if(typeof(jakes[homeGamePlayer.season][homeGamePlayer.week]) === "undefined") jakes[homeGamePlayer.season][homeGamePlayer.week] = [];
+
+          jakes[homeGamePlayer.season][homeGamePlayer.week].push({
+            playerId: homeGamePlayer.playerId,
+            fumblesLost: fumLost,
+            interceptions: ints,
+            jakeScore: jakeScore,
+            isBirthday: isBirthday,
+            season: homeGamePlayer.season, 
+            week: homeGamePlayer.week
+          });
+        }
+      }
+      
+      for(var v=0;v<vGameStats.length;v++) {
+        let vGamePlayer = vGameStats[v];
+        fumLost = vGamePlayer.calcFumLost;
+        ints = vGamePlayer.passingInterceptions;
+        multiplier = 1/6;
+        jakeScore = (((fumLost + ints) * multiplier) * 100).toFixed(2);
+        birthDate = moment(vGamePlayer.birthDate);
+        gameDate = moment(vGamePlayer.gameDate);
+        isBirthday = birthDate.format('MM-DD') === gameDate.format('MM-DD');
+
+        if (jakeScore > 0) {
+          if(typeof(jakes[vGamePlayer.season][vGamePlayer.week]) === "undefined") jakes[vGamePlayer.season][vGamePlayer.week] = [];
+
+          jakes[vGamePlayer.season][vGamePlayer.week].push({
+            playerId: vGamePlayer.playerId,
+            fumblesLost: fumLost,
+            interceptions: ints,
+            jakeScore: jakeScore,
+            isBirthday: isBirthday
+          });
+        }
+      }
+
+      if (Object.keys(jakes).length > 0) {
+        for(var season in jakes) {
+          for(var seasonWeeks in jakes[season]) {
+            var playerData = jakes[season][seasonWeeks];
+            var queryData = getKeysAndValues(playerData);
+
+            let query = ` INSERT INTO nfl.games_jakes
+                            (${queryData.keysSQL}) 
+                          VALUES (${queryData.valsSQL});`;
+        
+            await queryDB(query, queryData.params, res);  
+          } // End jakes insert loop
+        } // End seasons of jakes
+      } // End jakes if
+    } // End Season Loop                
 
     res.json({done: true, success: true });
   } catch (err) {
