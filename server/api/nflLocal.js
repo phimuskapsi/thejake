@@ -29,7 +29,7 @@ async function queryDB(query, params, res){
 
     
     //eslint-disable-next-line
-    //console.log('NFLData', NFLData);
+    //console.log('rows', rows);
 
     conn.end();
     if(Array.isArray(rows)){      
@@ -255,11 +255,12 @@ router.post('/add/game/score', async (req, res) => {
   }
 });
 
-router.post('add/jakes/', async (req, res) => {
+router.post('/add/jakes/', async (req, res) => {
   try {
-    for(var s=2001;s<2020;s++) {
-      let homePlayersQuery = `SELECT g.season, g.week, g.gameDate, score.homePointTotal, player.nflId, player.displayName, player.birthDate, team.nick,
-                                pass.passingAttempts, pass.passingCompletions, pass.passingInterceptions, pass.passingSacked,
+    // Even though we have *some* data back to 2001, not all. 2005 seems to be where this query starts working
+    for(var s=2006;s<2020;s++) {
+      let homePlayersQuery = `SELECT g.season, g.week, g.gameDate, g.gameId, score.homePointTotal, player.nflId, player.displayName, player.birthDate, team.nick,
+                                pass.playerId, pass.passingAttempts, pass.passingCompletions, pass.passingInterceptions, pass.passingSacked, team.teamId,
                                 IF(g.season > 2008, fumble.fumblesLost, (fumble.fumbles - (fumble.teammateFumbleRecovery + fumble.opponentFumbleRecovery + fumble.fumblesOutbounds))) as calcFumLost
                               FROM nfl.games g
                                 JOIN nfl.games_passing pass ON pass.gameId = g.gameId AND pass.teamId = g.homeTeamId
@@ -272,8 +273,8 @@ router.post('add/jakes/', async (req, res) => {
                               GROUP BY g.season, g.week, pass.gameId, pass.playerId
                               ORDER BY g.season, g.week`;
 
-      let vPlayersQuery =   `SELECT g.season, g.week, g.gameDate, score.visitorPointTotal, player.nflId, player.displayName, player.birthDate, team.nick,
-                              pass.passingAttempts, pass.passingCompletions, pass.passingInterceptions, pass.passingSacked,
+      let vPlayersQuery =   `SELECT g.season, g.week, g.gameDate, g.gameId, score.visitorPointTotal, player.nflId, player.displayName, player.birthDate, team.nick,
+                              pass.playerId, pass.passingAttempts, pass.passingCompletions, pass.passingInterceptions, pass.passingSacked, team.teamId,
                               IF(g.season > 2008, fumble.fumblesLost, (fumble.fumbles - (fumble.teammateFumbleRecovery + fumble.opponentFumbleRecovery + fumble.fumblesOutbounds))) as calcFumLost
                             FROM nfl.games g
                               JOIN nfl.games_passing pass ON pass.gameId = g.gameId AND pass.teamId = g.visitorTeamId
@@ -284,11 +285,14 @@ router.post('add/jakes/', async (req, res) => {
                               JOIN nfl.teams team ON team.teamId = pass.teamId
                             WHERE pass.passingAttempts > 7 AND pass.season = ${s} AND g.visitorWin = 0 AND player.position = 'QB'
                             GROUP BY g.season, g.week, pass.gameId, pass.playerId
-                            ORDER BY g.season, g.week`;                              
+                            ORDER BY g.season, g.week`;          
+                            
+      // eslint-disable-next-line
+      //console.log('homePlayersQuery:', homePlayersQuery);                      
 
       let homeGameStats = await queryDB(homePlayersQuery, [], res);
       let vGameStats = await queryDB(vPlayersQuery, [], res);
-      let jakes = {};
+      var jakes = {};
       var fumLost = 0;
       var ints = 0;
       var multiplier = 0;
@@ -296,7 +300,19 @@ router.post('add/jakes/', async (req, res) => {
       var birthDate = '';
       var gameDate = '';
       var isBirthday = false
+
+      // Init season in jakes
       jakes[s] = {};
+
+      let jakeCount = 0;
+      // eslint-disable-next-line
+      console.log('Starting jake home team losers processing for season: ', s);
+      
+      delete homeGameStats.meta;
+      delete vGameStats.meta;
+      // eslint-disable-next-line
+      // console.log('Home game stats:', homeGameStats);
+      //return;
 
       for(var h=0;h<homeGameStats.length;h++) {
         let homeGamePlayer = homeGameStats[h];
@@ -304,11 +320,12 @@ router.post('add/jakes/', async (req, res) => {
         ints = homeGamePlayer.passingInterceptions;
         multiplier = 1/6;
         jakeScore = (((fumLost + ints) * multiplier) * 100).toFixed(2);
-        birthDate = moment(homeGamePlayer.birthDate);
-        gameDate = moment(homeGamePlayer.gameDate);
+        birthDate = moment(new Date(homeGamePlayer.birthDate));
+        gameDate = moment(new Date(homeGamePlayer.gameDate));
         isBirthday = birthDate.format('MM-DD') === gameDate.format('MM-DD');
 
         if (jakeScore > 0) {        
+          jakeCount++;
           if(typeof(jakes[homeGamePlayer.season][homeGamePlayer.week]) === "undefined") jakes[homeGamePlayer.season][homeGamePlayer.week] = [];
 
           jakes[homeGamePlayer.season][homeGamePlayer.week].push({
@@ -316,25 +333,30 @@ router.post('add/jakes/', async (req, res) => {
             fumblesLost: fumLost,
             interceptions: ints,
             jakeScore: jakeScore,
-            jakePlace: 0,
+            jakeRank: 0,
             isBirthday: isBirthday,
             season: homeGamePlayer.season, 
-            week: homeGamePlayer.week
+            week: homeGamePlayer.week,
+            gameId: homeGamePlayer.gameId,
+            teamId: homeGamePlayer.teamId
           });
         }
       }
       
+      // eslint-disable-next-line
+      console.log('Starting jake visitor team losers processing for season: ', s);
       for(var v=0;v<vGameStats.length;v++) {
         let vGamePlayer = vGameStats[v];
         fumLost = vGamePlayer.calcFumLost;
         ints = vGamePlayer.passingInterceptions;
         multiplier = 1/6;
         jakeScore = (((fumLost + ints) * multiplier) * 100).toFixed(2);
-        birthDate = moment(vGamePlayer.birthDate);
-        gameDate = moment(vGamePlayer.gameDate);
+        birthDate = moment(new Date(vGamePlayer.birthDate));
+        gameDate = moment(new Date(vGamePlayer.gameDate));
         isBirthday = birthDate.format('MM-DD') === gameDate.format('MM-DD');
 
         if (jakeScore > 0) {
+          jakeCount++;
           if(typeof(jakes[vGamePlayer.season][vGamePlayer.week]) === "undefined") jakes[vGamePlayer.season][vGamePlayer.week] = [];
 
           jakes[vGamePlayer.season][vGamePlayer.week].push({
@@ -342,14 +364,20 @@ router.post('add/jakes/', async (req, res) => {
             fumblesLost: fumLost,
             interceptions: ints,
             jakeScore: jakeScore,
-            jakePlace: 0,
+            jakeRank: 0,
             isBirthday: isBirthday,
             season: vGamePlayer.season, 
-            week: vGamePlayer.week
+            week: vGamePlayer.week,
+            gameId: vGamePlayer.gameId,
+            teamId: vGamePlayer.teamId
           });
         }
       }
 
+      //let jakeCount = 0;
+      // eslint-disable-next-line
+      console.log(`Starting jake sorting for season: ${s}, number of jakes to process ${jakeCount}`);
+      
       if (Object.keys(jakes).length > 0) {
         for(var season in jakes) {
           for(var seasonWeeks in jakes[season]) {
@@ -357,26 +385,36 @@ router.post('add/jakes/', async (req, res) => {
             let jakeRankings = {
               firstPlace: {
                 score: 0,
+                val: 1,
                 players: []
               },
               secondPlace: {
                 score: 0,
+                val: 2,
                 players: []
               },
               thirdPlace: {
                 score: 0,
+                val: 3,
                 players: []
               },
               otherPlace: {
                 score: 0,
+                val: 4,
                 players: []
               }              
             };
 
             playersForWeek.sort((a, b) => {
-              return a.jakeScore > b.jakeScore ? 1 : -1
+              return a.jakeScore > b.jakeScore ? -1 : 1
             });
+
+            // eslint-disable-next-line
+            //console.log('playersForWeek: ', playersForWeek);
+            //return;
                       
+            // eslint-disable-next-line
+            //console.log(`Starting jake ranking for season: ${s}, week: ${seasonWeeks}`);
             for(let p=0;p<playersForWeek.length;p++){
               let playerData = playersForWeek[p];
 
@@ -386,46 +424,62 @@ router.post('add/jakes/', async (req, res) => {
                 if (ranking.score === 0) {
                   ranking.score = playerData.jakeScore;                  
                   ranking.players.push(playerData.playerId);
-                  playerData.jakePlace = rank;       
+                  jakeRankings[rank] = ranking;
+                  playerData.jakeRank = ranking.val;       
                   break;
                 }               
                 
-                if (rank === 'other' || (ranking.score > 0 && playerData.jakeScore === ranking.score)){
-                  playerData.jakePlace = rank;   
+                if (ranking.score > 0 && playerData.jakeScore === ranking.score){
+                  playerData.jakeRank = ranking.val;  
                   ranking.players.push(playerData.playerId);  
-                }
-
-                jakeRankings[rank] = ranking;
+                  jakeRankings[rank] = ranking;
+                  break;
+                }                
               }
               
               playersForWeek[p] = playerData;
             }
 
             // So at this point we should have jakes all sorted by score in one object "playersForWeek"
+            
+            //eslint-disable-next-line
+            //console.log(`Jake Rankings:`, jakeRankings);
+            //return;
+            
+            for(let p=0;p<playersForWeek.length;p++){
+              let playerData = playersForWeek[p];
+              let playerQueryData = getKeysAndValues(playerData);
+              let playerInsertQuery = ` INSERT INTO nfl.games_jakes  (${playerQueryData.keysSQL}) 
+                                        VALUES (${playerQueryData.valsSQL});`;
+
+              await queryDB(playerInsertQuery, playerQueryData.params, res);  
+            }
+
             // We should also have a full 'rankings' set. NOW we can insert things into the jake standings table and jakes table
             // Rankings should contain all the players jake rankings for the week.
             // When the player already exists, it will instead increment the proper place by 1, and total jakes by 1
             // We then have a count of how often this has happened for each player over their entire career. Historical info can also come from jakes 
+            // eslint-disable-next-line
+            //console.log(`Inserting jakes rankings: ${s}, week: ${seasonWeeks}`);
             for(let rank in jakeRankings) {
               let ranking = jakeRankings[rank];
               for (var rp=0;rp<ranking.players.length;rp++) {
                 let rplId = ranking.players[rp];
-                let rankingInsertQuery = `INSERT INTO games_jakes_rankings (${rank}, playerId, totalJakes)
-                                          VALUES (1, ${rplId}, 1)
+                let rankingInsertQuery = `INSERT INTO nfl.games_jakes_rankings (season, playerId, ${rank}, totalJakes)
+                                          VALUES (${s}, ${rplId}, 1, 1)
                                           ON DUPLICATE KEY UPDATE ${rank} = ${rank}+1, totalJakes=totalJakes+1`;
                 
                 await queryDB(rankingInsertQuery, [], res);
               }
             }
-            
-            for(let p=0;p<playersForWeek.length;p++){
-              let playerData = playersForWeek[p];
-            }
         
-            await queryDB(query, queryData.params, res);  
+            
           } // End jakes insert loop
+
+          // eslint-disable-next-line
+            console.log(`Completed jakes for season: ${s}`);
         } // End seasons of jakes
-      } // End jakes if
+      } // End jakes if      
     } // End Season Loop                
 
     res.json({done: true, success: true });
