@@ -416,8 +416,12 @@ class NFLPlayer {
     this.image               = '';
     this.jakeMulti           = 1/6;
     this.jakeImage           = '';
+    this.jakePlayerId        = 0;
     this.playerId            = playerRow.id;
     this.team                = playerRow.team;
+    this.season              = playerRow.season;
+    this.week                = playerRow.week;
+
     this.stats =  {    
       attempts:      typeof playerRow.passing !== undefined && typeof playerRow.passing.attempts      !== 'undefined' ? playerRow.passing.attempts : 0,
       completions:   typeof playerRow.passing !== undefined && typeof playerRow.passing.completions   !== 'undefined' ? playerRow.passing.completions : 0,

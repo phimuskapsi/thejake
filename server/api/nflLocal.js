@@ -316,6 +316,7 @@ router.post('add/jakes/', async (req, res) => {
             fumblesLost: fumLost,
             interceptions: ints,
             jakeScore: jakeScore,
+            jakePlace: 0,
             isBirthday: isBirthday,
             season: homeGamePlayer.season, 
             week: homeGamePlayer.week
@@ -341,7 +342,10 @@ router.post('add/jakes/', async (req, res) => {
             fumblesLost: fumLost,
             interceptions: ints,
             jakeScore: jakeScore,
-            isBirthday: isBirthday
+            jakePlace: 0,
+            isBirthday: isBirthday,
+            season: vGamePlayer.season, 
+            week: vGamePlayer.week
           });
         }
       }
@@ -349,12 +353,74 @@ router.post('add/jakes/', async (req, res) => {
       if (Object.keys(jakes).length > 0) {
         for(var season in jakes) {
           for(var seasonWeeks in jakes[season]) {
-            var playerData = jakes[season][seasonWeeks];
-            var queryData = getKeysAndValues(playerData);
+            let playersForWeek = jakes[season][seasonWeeks];
+            let jakeRankings = {
+              firstPlace: {
+                score: 0,
+                players: []
+              },
+              secondPlace: {
+                score: 0,
+                players: []
+              },
+              thirdPlace: {
+                score: 0,
+                players: []
+              },
+              otherPlace: {
+                score: 0,
+                players: []
+              }              
+            };
 
-            let query = ` INSERT INTO nfl.games_jakes
-                            (${queryData.keysSQL}) 
-                          VALUES (${queryData.valsSQL});`;
+            playersForWeek.sort((a, b) => {
+              return a.jakeScore > b.jakeScore ? 1 : -1
+            });
+                      
+            for(let p=0;p<playersForWeek.length;p++){
+              let playerData = playersForWeek[p];
+
+              for(let rank in jakeRankings) {
+                let ranking = jakeRankings[rank];
+                
+                if (ranking.score === 0) {
+                  ranking.score = playerData.jakeScore;                  
+                  ranking.players.push(playerData.playerId);
+                  playerData.jakePlace = rank;       
+                  break;
+                }               
+                
+                if (rank === 'other' || (ranking.score > 0 && playerData.jakeScore === ranking.score)){
+                  playerData.jakePlace = rank;   
+                  ranking.players.push(playerData.playerId);  
+                }
+
+                jakeRankings[rank] = ranking;
+              }
+              
+              playersForWeek[p] = playerData;
+            }
+
+            // So at this point we should have jakes all sorted by score in one object "playersForWeek"
+            // We should also have a full 'rankings' set. NOW we can insert things into the jake standings table and jakes table
+            // Rankings should contain all the players jake rankings for the week.
+            // When the player already exists, it will instead increment the proper place by 1, and total jakes by 1
+            // We then have a count of how often this has happened for each player over their entire career. Historical info can also come from jakes 
+            for(let rank in jakeRankings) {
+              let ranking = jakeRankings[rank];
+              for (var rp=0;rp<ranking.players.length;rp++) {
+                let rplId = ranking.players[rp];
+                let rankingInsertQuery = `INSERT INTO games_jakes_rankings (${rank}, playerId, totalJakes)
+                                          VALUES (1, ${rplId}, 1)
+                                          ON DUPLICATE KEY UPDATE ${rank} = ${rank}+1, totalJakes=totalJakes+1`;
+                
+                await queryDB(rankingInsertQuery, [], res);
+              }
+            }
+            
+            for(let p=0;p<playersForWeek.length;p++){
+              let playerData = playersForWeek[p];
+            }
         
             await queryDB(query, queryData.params, res);  
           } // End jakes insert loop

@@ -193,7 +193,19 @@ router.get('/jakes/history', async (req, res) => {
 
   var history = await queryDB(query, [], res);
   if (history.length > 0) {
-    res.json(history);
+    let seasonData = [];
+
+    for (let h=0;h<history.length;h++) {
+      let history = history[h];
+
+      if(typeof seasonData[history.season] === 'undefined') seasonData[history.season] = [];          
+      if(typeof seasonData[history.season][history.week] === 'undefined') seasonData[history.season][history.week] = [];
+
+      seasonData[history.season][history.week].push(history);
+    }
+
+
+    res.json(seasonData);
   } else {
     res.status(500).json(error);
   }
