@@ -5,24 +5,7 @@
         Historical Jakes
       </v-banner>
       <v-row> 
-        <v-col class="col-md-2">
-          <v-navigation-drawer
-            absolute
-            permanent
-            left
-          >           
-            <v-list dense>
-              <v-list-item
-                v-for="year in seasons"
-                :key="year"
-              >
-                <v-list-item-content>
-                  <v-list-item-title>{{ year }}</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
-          </v-navigation-drawer>
-        </v-col>
+        
         <v-col class="col-md-10">          
           <v-tabs :dark="true" v-if="showHistory">
             <v-tab v-for="year in seasons" :key="year">

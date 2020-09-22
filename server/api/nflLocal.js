@@ -62,7 +62,7 @@ router.get('/get/passing/:season/:week', async (req, res) => {
 
 router.get('/get/games/all', async (req, res) => {
   try {
-    var gamesQuery = `SELECT g.* FROM nfl.games g WHERE g.season = 2019 ORDER BY g.gameId `;
+    var gamesQuery = `SELECT g.* FROM nfl.games g WHERE g.season = 2020 ORDER BY g.gameId `;
     var games = await queryDB(gamesQuery, [], res);
 
     res.json({done: true, success: true, games: games });
@@ -231,30 +231,6 @@ router.post('/add/game/rushing', async (req, res) => {
   }
 });
 
-router.post('/add/game/score', async (req, res) => {
-  try {
-    var scoreData = req.body;
-    var gamesQuery = getKeysAndValuesForUpdate(scoreData.game);
-    var scoreQueryData = getKeysAndValues(scoreData.score);
-    var id = scoreData.id;
-
-    let gamesquery = `UPDATE nfl.games
-                       SET ${gamesQuery.sql} 
-                      WHERE id = ${id};`;
-
-    await queryDB(gamesquery, gamesQuery.params, res);  
-
-    let scorequery = `INSERT INTO nfl.games_score
-                        (${scoreQueryData.keysSQL}) 
-                      VALUES (${scoreQueryData.valsSQL});`;
-
-    await queryDB(scorequery, scoreQueryData.params, res);  
-    res.json({done: true, success: true });
-  } catch (err) {
-    res.status(500).json(error);
-  }
-});
-
 router.post('/add/jakes/', async (req, res) => {
   try {
     // Even though we have *some* data back to 2001, not all. 2005 seems to be where this query starts working
@@ -316,7 +292,7 @@ router.post('/add/jakes/', async (req, res) => {
 
       for(var h=0;h<homeGameStats.length;h++) {
         let homeGamePlayer = homeGameStats[h];
-        fumLost = homeGamePlayer.calcFumLost;
+        fumLost = homeGamePlayer.calcFumLost < 0 ? 0 : homeGamePlayer.calcFumLost;
         ints = homeGamePlayer.passingInterceptions;
         multiplier = 1/6;
         jakeScore = (((fumLost + ints) * multiplier) * 100).toFixed(2);
@@ -347,7 +323,7 @@ router.post('/add/jakes/', async (req, res) => {
       console.log('Starting jake visitor team losers processing for season: ', s);
       for(var v=0;v<vGameStats.length;v++) {
         let vGamePlayer = vGameStats[v];
-        fumLost = vGamePlayer.calcFumLost;
+        fumLost = vGamePlayer.calcFumLost < 0 ? 0 : vGamePlayer.calcFumLost;
         ints = vGamePlayer.passingInterceptions;
         multiplier = 1/6;
         jakeScore = (((fumLost + ints) * multiplier) * 100).toFixed(2);
@@ -533,6 +509,8 @@ router.post('/update/games', async (req, res) => {
     res.status(500).json(error);
   }
 });
+
+//
 
 function getKeysAndValuesForUpdate(obj){
   //console.log(obj);

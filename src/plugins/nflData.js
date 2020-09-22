@@ -159,7 +159,7 @@ export default class NFLData {
 
     if (players.length > 0) {        
       players.sort((a,b) => {
-        return b.jakeScore - a.jakeScore;
+        return b.jake_score - a.jake_score;
       });
 
       let jakepos = 0;
@@ -176,10 +176,10 @@ export default class NFLData {
         }
               
         if (p === 0) {
-          lastjake = player.jakeScore;
+          lastjake = player.jake_score;
         } else {          
-          if (player.jakeScore < lastjake) {
-            lastjake = player.jakeScore;
+          if (player.jake_score < lastjake) {
+            lastjake = player.jake_score;
             jakepos++;              
           }
         }
@@ -217,9 +217,9 @@ export default class NFLData {
     }
   }
 
-  async getHistoricalDataFromAPI (year = 2009, week = 0) {   
+  async getHistoricalDataFromAPI (year = 2007, week = 0) {   
     let self = this; 
-    let scheduleURL = 'https://profootballapi.com/schedule';
+    let scheduleURL = 'http://lvh.me:3000/api/v1/get/jakes/';
     let scheduleData = {
       api_key: self.apiKey,
       year: year,
@@ -233,7 +233,7 @@ export default class NFLData {
     try {
       //eslint-disable-next-line
       //console.log('starting season: ', year.toString());        
-      const schedule = await axios.post(scheduleURL, scheduleData);
+      const schedule = await axios.get(scheduleURL, scheduleData);
      
       //eslint-disable-next-line
       //console.log(year.toString() + ' schedule received.');
@@ -435,8 +435,8 @@ class NFLPlayer {
       this.stats.fumbles = typeof playerRow.fumbles.total_fumbles    !== 'undefined' ? playerRow.fumbles.total_fumbles : 0;
     }
 
-    this.jakeScore = parseFloat(((parseInt(this.stats.fumblesLost) + parseInt(this.stats.ints)) * this.jakeMulti) * 100).toFixed(2) 
-    if (isNaN(this.jakeScore)) this.jakeScore = '0.00';
+    this.jake_score = parseFloat(((parseInt(this.stats.fumblesLost) + parseInt(this.stats.ints)) * this.jakeMulti) * 100).toFixed(2) 
+    if (isNaN(this.jake_score)) this.jake_score = '0.00';
   }
 }
 

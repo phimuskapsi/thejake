@@ -12,22 +12,344 @@ class NFLAPI {
     this.players = [];
     this.teams = [];
     this.games = [];
+    this.season = 2020;
   }
 
   init() {
     // eslint-disable-next-line
     //console.log('Filling DB for 2011 ----> 2012 seasons. Hold on to your butts!');
-    /*
-    this.fillDB().then((result) => {
-      //eslint-disable-next-line
-      console.log('Result: ', result);
-    }); */
+
+      this.fillNFLPlayersWithPFF().then((result) => {
+        console.log('Result: ', result);
+      });
+
     // eslint-disable-next-line
-    console.log('Fixing Games...');
-    this.fixGames().then((result) => {
-      console.log('Result: ', result);
-    });
+    //console.log('Fixing Games...');
+    //this.fixGames().then((result) => {
+    //  console.log('Result: ', result);
+    //});
   }
+
+  async updateCurrentWeek() {
+    try {
+      var latestWeekResp = await fetch(`http://lvh.me:3000/api/v1/pff/get/currentweek/${this.season}`);
+      var latestWeek = await latestWeekResp.json();
+
+      // Then we have data and need to update instead of insert.
+      if(latestWeek.week && parseInt(latestWeek.week) > 0) {
+        debugger;
+        var l_games_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/games/${this.season}/${latestWeek.week}`);
+        var l_games = await l_games_resp.json();
+
+        var l_players_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/players/${this.season}/${latestWeek.week}`);
+        var l_players = await l_players_resp.json();
+
+        var pff_players_response = await fetch(`https://www.pff.com/api/fantasy/stats/passing?&season=${this.season}&weeks=${latestWeek.week}`);      
+        var pff_players_weekdata = await pff_players_response.json();
+        console.log('wd:', pff_players_weekdata);
+
+        var pff_games_response = await fetch(`https://premium.pff.com/api/v1/games?week=${latestWeek.week}&season=${this.season}&league=nfl`);
+        var pff_games = await pff_games_response.json();
+        
+        // OK, we need to update players and games, if they match - we don't care if they changed, just update anyway.
+        // Player Update first.
+        for(var pfp=0;pfp<pff_players_weekdata.length;pfp++) {
+          var pff_player = pff_players_weekdata[pfp];
+
+          for(var lp=0;lp<l_players.length;lp++) {
+            var local_player = l_players[lp];
+            if(local_player.player_id !== pff_player.player_id) continue;
+
+            var updated_resp = await fetch(`http://lvh.me:3000/api/v1/update/pff/week/`, {
+              method: 'post',              
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(pff_player)
+            });
+
+            var updated = await updated_resp.json();
+            if(!updated.success) console.log('failed to update: ', local_player)
+          }
+        }       
+        
+        // Then update games
+        for(var pfg=0;pfg<pff_games.length;pfg++) {
+          var pff_game = pff_games[pfg];
+
+          for(var lg=0;lg<l_games.length;lg++) {
+            var local_game = l_games[lg];
+            if(local_game.away_team_id !== pff_game.away_team_id || local_game.home_team_id !== pff_game.home_team_id) continue;
+            pff_game['season'] = local_game.season;
+            pff_game['week'] = local_game.week;
+
+            var updated_resp = await fetch(`http://lvh.me:3000/api/v1/update/pff/game/score`, {
+              method: 'post',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(pff_game)
+            });
+
+            var updated = await updated_resp.json();
+            if(!updated.success) console.log('failed to update: ', local_game)
+          }
+        }   
+      }
+
+      return 'probably updated...';
+    } catch (err) {
+      //eslint-disable-next-line
+      console.log('error:', err);
+      return err;
+    }
+  }
+
+  async fetchPFF() {
+    var season = 2008;
+    var weeks = 21;
+
+    console.log('starting pff fetch...');
+    for(var s=season;s<=2020;s++) {
+      console.log(`starting season ${s}...`);
+      if(s < 2020) weeks = 21;
+      if(s >= 2020) weeks = 2;
+
+      for(var w=1;w<=weeks;w++) {
+        console.log(`starting week ${w}...`);
+        var response = await fetch(`https://www.pff.com/api/fantasy/stats/passing?&season=${s}&weeks=${w}`);
+        var weekdata = await response.json();
+        
+        if(weekdata) {
+          //console.log('weekdata:', weekdata);
+          //return;
+
+          for(var p=0;p<weekdata.length;p++) {
+            var playerStats = weekdata[p];
+            var ints = parseInt(playerStats['ints']);
+            var fumbles = parseInt(playerStats['fumbles']);
+            var jakeMulti = 1/6;
+
+            playerStats['week'] = w;
+            playerStats['season'] = s;
+            playerStats['jake_score'] = parseFloat((ints + fumbles) * jakeMulti);
+            
+            let playerInsert = await fetch('http://lvh.me:3000/api/v1/add/pff/week', {
+              method: 'post',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(playerStats)
+            });
+      
+            let playerOK = await playerInsert.json();
+            if(!playerOK){
+              console.log('failed to add:', playerStats);
+            }
+          }
+        }
+      }        
+    }
+
+    return 'Added all data OK, probably.';
+  }
+
+  async fetchPFFGameData() {
+    var season = 2008;
+    var weeks = 21;
+
+    console.log('starting pff game fetch...');
+    for(var s=season;s<=2020;s++) {
+      console.log(`starting season ${s}...`);
+      if(s < 2020) weeks = 21;
+      if(s >= 2020) weeks = 2;
+
+      for(var w=1;w<=weeks;w++) {
+        console.log(`starting week ${w}...`);
+        var response = await fetch(`https://premium.pff.com/api/v1/games?week=${w}&season=${s}&league=nfl`);
+        var weekjson = await response.json();
+        var weekdata = weekjson.games;
+
+        if(weekdata) {
+          for(var p=0;p<weekdata.length;p++) {
+            let gameData = weekdata[p];
+            let awayScore = parseInt(gameData.score.away_team);
+            let homeScore = parseInt(gameData.score.home_team);
+            let winner = '';
+            let loser_id = 0;
+            let winner_id = 0;
+
+            if(awayScore === homeScore) {
+              winner = 'tie';
+            } else {
+              if (awayScore > homeScore) {
+                winner = 'away';
+                loser_id = gameData.home_team.franchise_id;
+                winner_id = gameData.away_team.franchise_id;
+              } else {
+                winner = 'home';
+                loser_id = gameData.away_team.franchise_id;
+                winner_id = gameData.home_team.franchise_id;
+              }
+            }
+
+            let gameInsertData = {
+              score_away: gameData.score.away_team,
+              score_home: gameData.score.home_team,
+              season: s, 
+              week: w, 
+              stadium_id: gameData.stadium_id,
+              away_team_id: gameData.away_team.franchise_id,
+              home_team_id: gameData.home_team.franchise_id,
+              winner: winner,
+              winner_id: winner_id,
+              loser_id: loser_id
+            };
+
+            let gameInsert = await fetch('http://lvh.me:3000/api/v1/add/pff/game', {
+              method: 'post',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(gameInsertData)
+            });
+      
+            let gameOK = await gameInsert.json();
+            if(!gameOK){
+              console.log('failed to add:', gameInsertData);
+            }
+          }
+        }
+      }        
+    }
+
+    return 'Added all game data OK, probably.';
+  }
+
+  async fillNFLPlayersWithPFF() {
+    var s = 2020;
+    var qbresponse = await fetch(`http://lvh.me:3000/api/v1/get/pff/player_list/${s}`);
+    var qbjson = await qbresponse.json();
+    var qbs = qbjson.qbs;
+
+    console.log('qbs data:', qbs);
+    
+    for(var q=0;q<qbs.length;q++) {
+      var qb = qbs[q];
+      var playerName = qb.player;
+
+      console.log('qb data:', qb);
+
+      var plresponse = await fetch(`http://lvh.me:3000/api/v1/get/player/name/`,{
+        method: 'post',              
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: playerName, season: 2019 })
+      });
+
+      var pljson = await plresponse.json();
+      var playerInfo = pljson.player ? pljson.player : null;
+
+      console.log('playerInfo data:', playerInfo);
+
+      var insertData = {
+        season: s,
+        nflId: playerInfo ? playerInfo.nflId : 0,
+        displayName: playerName,
+        firstName: playerName.split(' ')[0],
+        lastName: playerName.split(' ')[1],
+        positionGroup: 'QB',
+        position: 'QB',
+        birthDate: playerInfo ? playerInfo.birthDate : '',
+        jerseyNumber: playerInfo ? playerInfo.jerseyNumber : '',
+        height: playerInfo ? playerInfo.height : '',
+        weight: playerInfo ? playerInfo.weight : '',
+      };  
+   
+      var added_playerr = await fetch(`http://lvh.me:3000/api/v1/add/player`, {
+        method: 'post',              
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(insertData)
+      });
+      var added_playerj = await added_playerr.json();
+      var update_pff_data = {
+        player_id: added_playerj.id,
+        id: qb.id
+      };
+
+      console.log('pff data:', update_pff_data);
+
+      var update_pff_idr = await fetch(`http://lvh.me:3000/api/v1/update/pff/player/`, {
+        method: 'post',              
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(update_pff_data)
+      });
+
+      var update_pff_idj = await update_pff_idr.json();
+      console.log('pff resp:', update_pff_idj);
+
+      if(!update_pff_idj.success) {
+        console.log('failed, last data:', update_pff_data);
+      }
+    }
+  }
+
+  async fetchPFFTeamData() {
+    var season = 2008;
+
+    console.log('starting pff team fetch...');
+    for(var s=season;s<=2020;s++) {
+      console.log(`starting season ${s}...`);
+    
+      var response = await fetch(`https://www.pff.com/api/fantasy/stats/teams?league=nfl&season=${s}`);
+      var seasonjson = await response.json();
+      var seasondata = seasonjson.teams;
+      
+      if(seasondata) {
+        for(var sd=0;sd<seasondata.length;sd++) {
+          let teamData = seasondata[sd];
+          let teamInsertData = {
+            abbreviation: teamData.abbreviation,
+            city: teamData.city,
+            franchise_id: teamData.franchise_id,
+            nickname: teamData.nickname,
+            primary_color: teamData.primary_color,
+            secondary_color: teamData.secondary_color,
+            season: s
+          };
+
+          let teamInsert = await fetch('http://lvh.me:3000/api/v1/add/pff/team', {
+            method: 'post',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(teamInsertData)
+          });
+    
+          let teamOK = await teamInsert.json();
+          if(!teamOK){
+            console.log('failed to add:', teamInsertData);
+          }
+        }
+      }    
+    }
+
+    return 'Added all team data OK, probably.';
+  }
+  
 
   async fixGames() {
     // Due to an oversight...I have to add in a bunch of game stats.    
@@ -99,7 +421,7 @@ class NFLAPI {
       // NOTE: Something broke after 2013 so latter stats are not complete yet!!
 
 
-      for (let y = 2013; y <= 2014; y++) {
+      for (let y = 2020; y <= 2020; y++) {
         //        
         let rosterRes = true;       
         //rosterRes = await this.rosterSetup(y, teamJSON.teams);

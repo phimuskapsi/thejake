@@ -1,104 +1,111 @@
 <template>
   <div>    
-    <v-container fluid>
-      <v-row>         
-        <v-col class="col-md-12">
-          <v-banner single-line>
-            Current Jakes of the Week
-          </v-banner>
-        </v-col>
-      </v-row>
-      <v-row>         
-        <v-col class="col-md-12">
-          <v-row>
-            <v-col v-for="item in jakes" :key="item.name" class="player-col extrapad">                   
-              <v-row :class="item.color">
-                <v-col class="col-md-12">
-                  <h2 class="header-dark">
-                    {{item.name}}
-                    <v-img v-if="item.icon !== null" class="white--text align-end" height="30px" :src="item.icon" contain></v-img>    
-                  </h2>
-                </v-col>
-              </v-row>
-              <v-row class="dark">
-                <v-col class="col-md-6">
-                  <v-img v-if="item.image !== null" class="white--text align-end" height="140px" :src="item.image" contain></v-img>     
-                  <v-img v-if="item.image === null" class="white--text align-end" height="140px" src="@/assets/noplayerimage.png" contain></v-img>
-                </v-col>
-                <v-col class="col-md-6">
-                  <v-img v-if="item.jakeImage !== null" class="white--text align-end" height="140px" :src="item.jakeImage" contain></v-img>     
-                </v-col>
-              </v-row>
-
-              <v-row class="darker">
-                <v-col class="col-md-6 darker">
-                  <table>
-                    <tr>
-                      <td>
-                        Jake Score:
-                      </td>
-                      <td class="td-pad-left td-data-right">
-                        {{ item.jakeScore }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        INT:
-                      </td>
-                      <td class="td-pad-left td-data-right">
-                        {{ item.stats.ints }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        FUM LOST:
-                      </td>
-                      <td class="td-pad-left td-data-right">
-                        {{ item.stats.fumblesLost }}
-                      </td>
-                    </tr>
-                  </table>                  
-                </v-col>
-              </v-row>              
+    <v-container fluid>      
+      <v-row>                 
+        <v-col v-for="item in jakes" :key="item.player" class="col-md-3 player-col" style="padding-top:0px;">                   
+          <v-row :class="item.primary_color">
+            <v-col class="col-md-12">
+              <h2 class="header-dark">
+                {{item.player}}
+                <v-img v-if="item.icon !== null" class="white--text" max-width="30px" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain></v-img>    
+              </h2>
             </v-col>
           </v-row>
+          <v-row class="dark">
+            <v-col class="col-md-6">
+              <v-img v-if="item.image !== null" class="white--text align-end" height="140px" :src="item.image" contain></v-img>     
+              <v-img v-if="item.image === null" class="white--text align-end" height="140px" src="@/assets/noplayerimage.png" contain></v-img>
+            </v-col>
+            <v-col class="col-md-6">
+              <v-img v-if="item.jakeImage !== null" class="white--text align-end" height="140px" :src="item.jakeImage" contain></v-img>     
+            </v-col>
+          </v-row>
+
+          <v-row class="darker">
+            <v-col class="col-md-6 darker">
+              <table>
+                <tr>
+                  <td>
+                    Jake Score:
+                  </td>
+                  <td class="td-pad-left td-data-right">
+                    {{ item.jake_score }}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    INT:
+                  </td>
+                  <td class="td-pad-left td-data-right">
+                    {{ item.ints }}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    FUM LOST:
+                  </td>
+                  <td class="td-pad-left td-data-right">
+                    {{ item.fumbles }}
+                  </td>
+                </tr>
+              </table>                  
+            </v-col>
+            <v-col class="col-md-6 darker">
+              <table>
+                <tr>
+                  <td>
+                    TD:
+                  </td>
+                  <td class="td-pad-left td-data-right">
+                    {{ item.total_tds }}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    Comp %:
+                  </td>
+                  <td class="td-pad-left td-data-right">
+                    {{ item.comp_per }} ({{item.comp}} / {{item.att}})
+                  </td>
+                </tr>                    
+                <tr>
+                  <td>
+                    Rushes:
+                  </td>
+                  <td class="td-pad-left td-data-right">
+                    {{ item.rush_carries }} / {{ item.rush_yds }}
+                  </td>
+                </tr>
+              </table> 
+            </v-col>
+          </v-row>              
         </v-col>
       </v-row>
       <v-row>
         <v-col>
+          <h5>Season:</h5>
           <v-select
             :items="seasons"
-            :v-model="selectedSeason"
-            label="Season: "
+            v-model="selectedSeason"
+            @change="getHistory" 
+            label="Season:"
             solo
+            outlined
           ></v-select>
         </v-col>
         <v-col>
-          <v-select
-            :items="seasonTypes"
-            :v-model="selectedSeasonType" 
-            label="Type:"
-            solo
-          ></v-select>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
+          <h5>Week:</h5>
           <v-select
             :items="weeks"
-            :v-model="selectedWeek"
-            label="Weeks "
+            v-model="selectedWeek"
+            @change="getHistory" 
+            label="Weeks:"
             solo
+            outlined
           ></v-select>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col>
-          <div class="my-2">
-            <v-btn text small color="primary" :v-on:click="getHistory()">Load History</v-btn>
-          </div>
-        </v-col>
-      </v-row>
+      
       <v-row>
         <v-col>                
           <v-data-table
@@ -115,7 +122,7 @@
 
 <script>
   // import HistoricalJakes from './HistoricalJakes';
-  import NFLData from '../plugins/nflData.js';
+  import NFLData from '../plugins/pffData.js';
   import * as moment from 'moment'
   
   export default {
@@ -123,7 +130,8 @@
     data () {
       return {
         currentWeek: 0,
-        currentSeason: moment().format('YYYY'),        
+        currentSeason: 0,        
+        lastUpdated: 0,
         players: [],
         jakes: [],
         showHistoryTable: false,
@@ -133,100 +141,153 @@
         headers: [
           {
             text: 'Player',
-            value: 'name',
+            value: 'player',
           },
-          { text: 'Jake Score', value: 'jakeScore' },
-          { text: 'INT', value: 'stats.ints' },
-          { text: 'Fumbles Lost', value: 'stats.fumblesLost' }
+          { text: 'Team', value: 'abbreviation' },          
+          { text: 'Int', value: 'ints' },
+          { text: 'Fumbles', value: 'fumbles' },
+          { text: 'Jake Score', value: 'jake_score' },
+          { text: 'Ultimate Jake', value: 'ultimate_score' },
+          { text: 'Score', value: 'finalScore' }
         ],
         seasons: [],
         weeks: [],
         seasonTypes: [
-          { text: 'Preseason', value: 'PRE' },
           { text: 'Regular Season', value: 'REG' },
           { text: 'Post-season', value: 'POST' }],
         selectedHistory: [],
         selectedSeasonType: 'REG',
         selectedSeason: 0,
-        selectedWeek: 1
+        selectedWeek: 1,
+        time_loop_length: 15,
+        time_restrictions: ['23:59', '23:59', false, false, '23:59', false, false]
       }
     },    
     created () {
       
     }, 
     mounted () {
-      this.setupData().then(() => {
-        this.prepSeason();
-        this.getJakes();
-      })
+      this.setupData().then(() => {        
+        this.refreshWeek().then(() => {
+          this.getJakes();
+          this.startUpdater();
+        });
+      });
     },
     methods: {
-      prepSeason () {
-        let maxWeeks = 17;
+      assignImages () {
+        for(var j=0;j<this.jakes.length;j++) {
+          let names = this.jakes[j].player.split(' ');
+          let img = require('../assets/players/' + names[0].substring(0,1).toLowerCase() + '.' + names[1].toLowerCase() + '.jpg');
+          let color = '';
+          let ji = '';
 
-        if (this.currentSeason === this.selectedSeason) {
-          maxWeeks = this.currentWeek;
+          switch(j) {
+            case 0:
+              color = 'gold';
+              ji = 'jake_gold.jpg';
+              break;
+            case 1:
+              color = 'silver';
+              ji = 'jake_silver.jpg';
+              break;
+            case 2:
+              color = 'bronze';
+              ji = 'jake_bronze.jpg';
+              break;
+            case 3:
+              color = 'gray';
+              ji = 'jake_award.jpg';
+              break;
+          }
+
+          this.jakes[j]['image'] = img;
+          this.jakes[j]['jakeImage'] = require('../assets/' + ji);
+          this.jakes[j]['icon'] = require('../assets/teams/' + this.jakes[j].abbreviation.toUpperCase() + '-icon.png');
+          this.jakes[j].primary_color = color;
         }
-
-        this.weeks = [];
-        for (let w=1;w<=maxWeeks;w++) {
-          this.weeks.push(w);
-        }        
       },
       async getJakes () {
         //var self = this;      
-
-        var weekData = await this.NFLData.getJakes(this.NFLData.season, this.NFLData.week);
+        
+        var jakeData = await this.NFLData.getJakesByWeek(this.currentSeason, this.currentWeek);        
         //eslint-disable-next-line
         //console.log('weekData:', weekData);
 
-        this.players = Object.assign([], weekData);
-        this.history[this.NFLData.season][this.NFLData.week].players = this.players;        
-        this.jakes = this.players.slice(0,4);          
+        this.players = Object.assign([], jakeData);
+        this.history[this.currentSeason][this.currentWeek].players = this.players;
+        
+        if(this.players.length < 4) {
+          var missing = 4 - this.players.length;
+          for(var p=missing;p>0;p--) {
+            this.players.push({
+              player: 'No player',
+              att: 0,
+              comp: 0,
+              fumbles: 0,
+              ints: 0,
+              rush_carries: 0,
+              rush_tds: 0,
+              rush_yds: 0,
+              tds: 0,
+              yds: 0,
+              jake_score: 0.00,
+              score_away: 0,
+              score_home: 0,
+              abbreviation: '',
+              teamName: '',
+              primary_color: 'silver',
+              secondary_color: 'black',
+              weight: 0.00
+            });
+          }
+        } 
+
+        // Figure out the true jake order based off of the ultimate formula.
+        // this.calcUltimate();
+        this.jakes = this.players.slice(0,4);
+        this.assignImages();
         if (this.jakes) {
           this.showJakeRankings = true;
         }
       },
-      async getHistory () {
-        var self = this;
-        
-        if (self.selectedSeason > 0 && self.selectedWeek > 0) {
-          if (self.history[self.selectedSeason][self.selectedWeek].players.length > 0) {
-            self.selectedHistory = self.history[self.selectedSeason][self.selectedWeek].players;
-            self.showHistoryTable = true;
-          } else {
-            let weekData = await this.NFLData.getJakes(self.selectedSeason, self.selectedWeek);
-            self.history[self.selectedSeason][self.selectedWeek].players = weekData;
-            self.showHistoryTable = true;
-          }
+      async getHistory () {       
+        if (this.selectedSeason > 0) {
+          if(this.selectedWeek > 0) {
+            if (this.history[this.selectedSeason][this.selectedWeek].players.length > 0) {
+              this.selectedHistory = this.history[this.selectedSeason][this.selectedWeek].players;
+              this.showHistoryTable = true;
+            } else {
+              let weekData = await this.NFLData.getJakesByWeek(this.selectedSeason, this.selectedWeek);
+              this.history[this.selectedSeason][this.selectedWeek].players = weekData;
+              this.selectedHistory = weekData;
+              this.showHistoryTable = true;
+            }
+          } 
 
           return;
         }
 
-        self.showHistoryTable = false;
+        this.showHistoryTable = false;
         return;
       },      
+      async refreshWeek() {
+        this.lastUpdated = moment().millisecond();        
+        let refresh = this.NFLData.updateCurrentWeek();
+      },
       async setupData () {   
-        let season       = this.currentSeason;
-        let month        = parseInt(moment().format('MM'));
-
         await this.NFLData.init();
         this.currentWeek = this.NFLData.week;
+        this.currentSeason = this.NFLData.season;
         this.selectedSeason = this.currentSeason;
         this.selectedWeek = this.currentWeek;
-
         let maxWeek = this.currentWeek;
 
-        if (month < 3) {
-          season--;
-          this.currentSeason = season;
-        }
-
-        for (let y=season;y>2008;y--) {
+        for (let y=this.currentSeason;y>2007;y--) {
           this.history[y] = [];
           this.seasons.push(y);
 
-          if (y < season) maxWeek = 17;          
+          if (y < this.currentSeason) maxWeek = 21;          
           for (let w=1;w<=maxWeek;w++) {
             if (typeof this.weeks[w] === 'undefined') this.weeks.push(w);            
             this.history[y][w] = {                
@@ -261,7 +322,8 @@
   .player-col {
     margin-left: 10px;
     margin-right: 10px;
-    width: calc(25% - 20px);
+    width: calc(25% - 20px) !important;
+    max-width: calc(25% - 20px) !important;
     float: left;
   }
 
