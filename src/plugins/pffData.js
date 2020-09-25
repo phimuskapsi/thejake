@@ -19,21 +19,6 @@ export default class NFLData {
     await self.getCurrentWeek();
   }
 
-  async calcUltimateJakes() {
-    var weights = {
-      comp: 0.40,
-      score: 0.20,
-      scorePass: 0.20,
-      diff: 0.10,
-      history: 0.10,
-      birthday: 100.00
-    };
-
-    for(var p=0;p<this.players.length;p++) {
-      var player = this.players[p];
-    }
-  }
-
   async getJakesByWeek (season = 0, week = 0) {    
     var players = [];
 
@@ -90,10 +75,15 @@ export default class NFLData {
     }
   }
 
-  async updateCurrentWeek() {
+  async updateCurrentWeek(season = 0, week = 0) {
     try {
+      var selected_season = this.season;
+      var selected_week = this.week;
 
-      var latestWeekResp = await fetch(`http://lvh.me:3000/api/v1/update/currentweek/${this.season}/${this.week}`);
+      if(season > 0) selected_season = season;
+      if(week > 0) selected_week = week;
+
+      var latestWeekResp = await fetch(`http://lvh.me:3000/api/v1/update/currentweek/${selected_season}/${selected_week}`);
       var latestWeek = await latestWeekResp.json();
       return latestWeek;
       

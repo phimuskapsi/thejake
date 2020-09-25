@@ -54,7 +54,7 @@
               <table>
                 <tr>
                   <td>
-                    TD:
+                    Pass TD:
                   </td>
                   <td class="td-pad-left td-data-right">
                     {{ item.total_tds }}
@@ -70,10 +70,10 @@
                 </tr>                    
                 <tr>
                   <td>
-                    Rushes:
+                    TruJake:
                   </td>
                   <td class="td-pad-left td-data-right">
-                    {{ item.rush_carries }} / {{ item.rush_yds }}
+                    {{ item.ultimate_score }}
                   </td>
                 </tr>
               </table> 
@@ -147,7 +147,7 @@
           { text: 'Int', value: 'ints' },
           { text: 'Fumbles', value: 'fumbles' },
           { text: 'Jake Score', value: 'jake_score' },
-          { text: 'Ultimate Jake', value: 'ultimate_score' },
+          { text: 'TruJake', value: 'ultimate_score' },
           { text: 'Score', value: 'finalScore' }
         ],
         seasons: [],
@@ -171,14 +171,22 @@
         this.refreshWeek().then(() => {
           this.getJakes();
           this.startUpdater();
+          this.getHistory();
         });
       });
     },
     methods: {
       assignImages () {
+        var no_name_used = false;
         for(var j=0;j<this.jakes.length;j++) {
           let names = this.jakes[j].player.split(' ');
-          let img = require('../assets/players/' + names[0].substring(0,1).toLowerCase() + '.' + names[1].toLowerCase() + '.jpg');
+          let img = '';
+          try {
+            img = require('../assets/players/' + names[0].substring(0,1).toLowerCase() + '.' + names[1].toLowerCase() + '.jpg');
+          } catch (ex) {
+            if(!no_name_used) img = require('../assets/players/no-image.jpg');
+            if(no_name_used) img = '../assets/players/no-image.jpg';
+          }
           let color = '';
           let ji = '';
 
@@ -203,7 +211,13 @@
 
           this.jakes[j]['image'] = img;
           this.jakes[j]['jakeImage'] = require('../assets/' + ji);
-          this.jakes[j]['icon'] = require('../assets/teams/' + this.jakes[j].abbreviation.toUpperCase() + '-icon.png');
+
+          try {
+            this.jakes[j]['icon'] = require('../assets/teams/' + this.jakes[j].abbreviation.toUpperCase() + '-icon.png');
+          } catch(ex) {
+            this.jakes[j]['icon'] = '';
+          }
+          
           this.jakes[j].primary_color = color;
         }
       },
@@ -253,7 +267,7 @@
       },
       async getHistory () {       
         if (this.selectedSeason > 0) {
-          if(this.selectedWeek > 0) {
+          if(this.selectedWeek > 0) {           
             if (this.history[this.selectedSeason][this.selectedWeek].players.length > 0) {
               this.selectedHistory = this.history[this.selectedSeason][this.selectedWeek].players;
               this.showHistoryTable = true;
@@ -263,6 +277,11 @@
               this.selectedHistory = weekData;
               this.showHistoryTable = true;
             }
+
+            this.currentWeek = this.selectedWeek;
+            this.currentSeason = this.selectedSeason;
+            await this.refreshWeek(this.currentSeason, this.currentWeek);
+            this.getJakes();
           } 
 
           return;
@@ -271,9 +290,9 @@
         this.showHistoryTable = false;
         return;
       },      
-      async refreshWeek() {
+      async refreshWeek(season = 0, week = 0) {
         this.lastUpdated = moment().millisecond();        
-        let refresh = this.NFLData.updateCurrentWeek();
+        let refresh = this.NFLData.updateCurrentWeek(season, week);
       },
       async setupData () {   
         await this.NFLData.init();
@@ -295,6 +314,9 @@
             };              
           }         
         }
+      },
+      async startUpdater() {
+        
       }
     }
   }

@@ -5,6 +5,7 @@ const router  = express.Router();
 const pool    = mariadb.createPool(require('../config.json'));
 const fetch = require("node-fetch");
 const { weekdaysMin } = require('moment');
+const { query } = require('express');
 var error   = { message: 'Error!', code: 0 };
 
 Object.prototype.clone = Array.prototype.clone = function()
@@ -130,13 +131,17 @@ async function parseYahooPassers(yahooData, season, week) {
       player_stats[stat.statId] = stat.value;
     });
 
+    if(player.displayName === 'Dwayne Haskins' && season === 2019) console.log(player_stats);
     if(player.team.abbreviation === 'WAS') player.team.abbreviation = 'WSH';
-    var teamIdR = await fetch(`http://lvh.me:3000/api/v1/get/pff/team/${player.team.abbreviation}/${season}`);
-    var teamIdJ = await teamIdR.json();
-    var teamId = teamIdJ.team[0].franchise_id;
+    var teamId = 0;
+    if(season >= 2020) {
+      var teamIdR = await fetch(`http://lvh.me:3000/api/v1/get/pff/team/${player.team.abbreviation}/${season}`);
+      var teamIdJ = await teamIdR.json();
+      teamId = teamIdJ.team[0].franchise_id;
+    }
 
     //console.log('team:', teamIdJ);
-
+    
     var parsedPlayer = {
       id: 0,
       ints: player_stats.PASSING_INTERCEPTIONS,
@@ -186,6 +191,8 @@ async function calculateUltimate(player_stats, player, season) {
   // Idea is that a perfect jake is 1075 + 10000 = 11075 (jan 10, 1975 - delhomme's bday!)
   // Jake score makes up the majority.
   ultimate += jake * 5; // up to 500 (or more theoretically)
+
+  if(player === 'Dwayne Haskins' && season === 2019) console.log(player_stats);
   
   // Sacks add 100 more. If 10 or more, 100
   ultimate += (sacks > 10 ? 100 : sacks * 10);
@@ -196,12 +203,15 @@ async function calculateUltimate(player_stats, player, season) {
   if(qbr === 0) qbr = 1;
   ultimate +=  Math.ceil(((1/qbr)*158.3)*1.895);
   
-  // TD's work like sacks in reverse
+  // TD's work like sacks in reverse, 0 td's = no subtraction, perfect is achievable.
   ultimate -= (td > 10 ? 100 : td * 10);
 
   // ints add 100 more. If 10 or more, 100
   // Yes, I'm double dipping. I make the rules.
   ultimate += (int > 10 ? 100 : int * 10);
+
+  // 1000 only gets us soooo far.
+  ultimate += 75;
 
   var playerDataR = await fetch(`http://lvh.me:3000/api/v1/get/player/name/`, {
     method: 'post',              
@@ -212,6 +222,8 @@ async function calculateUltimate(player_stats, player, season) {
     body: JSON.stringify({ name: player, season: season })
   });
   var playerDataJ = await playerDataR.json();
+
+  if(player === 'Dwayne Haskins' && season === 2019) console.log(playerDataJ);
   var birthday = playerDataJ.birthDate;
   var today = moment().format('MM/DD/YYYY');
 
@@ -226,12 +238,12 @@ async function calculateUltimate(player_stats, player, season) {
   return ultimate;  
 }
 
-async function updateCurrentWeek(season, week) {
+async function updateCurrentWeek(season, week = 0) {
   try {
     var latestWeekResp = await fetch(`http://lvh.me:3000/api/v1/pff/get/currentweek/${season}`);
     var latestWeek = await latestWeekResp.json();
 
-    if(week > latestWeek.week) latestWeek.week = week;
+    if(week > 0 && season < 2020) latestWeek.week = week;
 
     // Then we have data and need to update instead of insert.
     if(latestWeek.week && parseInt(latestWeek.week) > 0) {      
@@ -243,9 +255,11 @@ async function updateCurrentWeek(season, week) {
       var l_players_json = await l_players_resp.json();      
       var l_players = l_players_json.qbs;
 
-      var espn_current_stats_r = await fetch(`http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard`);      
-      var espn_current_stats = await espn_current_stats_r.json();
-      var espn_parsed_games = await parseESPNGames(espn_current_stats, season, week);
+      if(season >= 2020) {
+        var espn_current_stats_r = await fetch(`http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard`);      
+        var espn_current_stats = await espn_current_stats_r.json();
+        var espn_parsed_games = await parseESPNGames(espn_current_stats, season, week);
+      }
 
       var yahoo_current_pstats_r = await fetch(`https://graphite-secure.sports.yahoo.com/v1/query/shangrila/weeklyStatsFootballPassing?season=${season}&league=nfl&sortStatId=PASSING_INTERCEPTIONS&week=${latestWeek.week}&count=200`);
       var yahoo_current_pstats = await yahoo_current_pstats_r.json();
@@ -287,41 +301,43 @@ async function updateCurrentWeek(season, week) {
       }       
       
       // Then update games
-      for(var pfg=0;pfg<espn_parsed_games.length;pfg++) {
-        var local_game = false;
-        var espn_game = espn_parsed_games[pfg];
-        //console.log('eg:', espn_game);
-        var lgindex = l_games.findIndex((game) => {
-          return game.away_team_id === espn_game.away_team_id && game.home_team_id === espn_game.home_team_id
-        });
-        
-        //console.log('lgi:', lgindex);
+      if(season >= 2020) {
+        for(var pfg=0;pfg<espn_parsed_games.length;pfg++) {
+          var local_game = false;
+          var espn_game = espn_parsed_games[pfg];
+          //console.log('eg:', espn_game);
+          var lgindex = l_games.findIndex((game) => {
+            return game.away_team_id === espn_game.away_team_id && game.home_team_id === espn_game.home_team_id
+          });
+          
+          //console.log('lgi:', lgindex);
 
-        if(lgindex >= 0) {
-          local_game = l_games[lgindex];
-        }
-      
-        //console.log('local game:', local_game);
-        var insertGame = espn_game;
-        var url = '';
-        if(local_game) {
-          insertGame.id = local_game.id;
-          url = `http://lvh.me:3000/api/v1/update/pff/game/score`;
-        } else {
-          url = `http://lvh.me:3000/api/v1/add/pff/game`;
-        }
+          if(lgindex >= 0) {
+            local_game = l_games[lgindex];
+          }
         
-        var updated_game_resp = await fetch(url, {
-          method: 'post',              
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(insertGame)
-        });
+          //console.log('local game:', local_game);
+          var insertGame = espn_game;
+          var url = '';
+          if(local_game) {
+            insertGame.id = local_game.id;
+            url = `http://lvh.me:3000/api/v1/update/pff/game/score`;
+          } else {
+            url = `http://lvh.me:3000/api/v1/add/pff/game`;
+          }
+          
+          var updated_game_resp = await fetch(url, {
+            method: 'post',              
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(insertGame)
+          });
 
-        var updatedGame = await updated_game_resp.json();            
-      }   
+          var updatedGame = await updated_game_resp.json();            
+        }   
+      }
     }
 
     return {success: true, msg: 'probably updated...'};
@@ -332,7 +348,7 @@ async function updateCurrentWeek(season, week) {
   }
 }
 
-async function queryDB(query, params, res){
+async function queryDB(query, params){
   let conn;
 
   if (typeof(query) === 'undefined'){
@@ -371,21 +387,20 @@ async function queryDB(query, params, res){
   } catch (err) {
     //eslint-disable-next-line
     console.log('err', err);
-    res.json(err);
   } finally {
     if (conn) conn.end();
   }
 }
 
-router.post('/add/player/', async (req, res) => {
+router.post('/add/pff/player/', async (req, res) => {
   try {
     var playerData = req.body;
     var insertPFFData = getKeysAndValues(playerData);
-    let insertPFFQuery = `INSERT INTO nfl.players
+    let insertPFFQuery = `INSERT INTO nfl.pff_players
                             (${insertPFFData.keysSQL}) 
                           VALUES (${insertPFFData.valsSQL});`;
 
-    var inserted = await queryDB(insertPFFQuery, insertPFFData.params, res);  
+    var inserted = await queryDB(insertPFFQuery, insertPFFData.params);  
     res.json({done: true, success: inserted.success, id: inserted.id });
   } catch (err) {
     res.status(500).json(error);
@@ -400,22 +415,29 @@ router.post('/add/pff/game', async (req, res) => {
                             (${insertPFFData.keysSQL}) 
                           VALUES (${insertPFFData.valsSQL});`;
 
-    await queryDB(insertPFFQuery, insertPFFData.params, res);  
+    await queryDB(insertPFFQuery, insertPFFData.params);  
     res.json({done: true, success: true });
   } catch (err) {
     res.status(500).json(error);
   }
 });
 
-router.post('/add/pff/player', async (req, res) => {
+router.post('/add/nfl/player', async (req, res) => {
   try {
-    var weekData = req.body;
-    var insertPFFData = getKeysAndValues(weekData);
-    let insertPFFQuery = `INSERT INTO nfl.pff_teams
-                            (${insertPFFData.keysSQL}) 
-                          VALUES (${insertPFFData.valsSQL});`;
+    var playerData = req.body;
+    var insertPFFData = getKeysAndValues(playerData);
 
-    await queryDB(insertPFFQuery, insertPFFData.params, res);  
+    var pquery = ` SELECT COUNT(*) as listed FROM nfl.pff_players WHERE nfl_id = ${playerData.nfl_id}`;
+    var pcountres = await queryDB(pquery, []);
+    var pcount = pcountres[0] && pcountres[0].listed ? parseInt(pcountres[0].listed) > 0 : false;
+
+    if(!pcount) {
+      let insertPFFQuery = `INSERT INTO nfl.pff_players
+                              (${insertPFFData.keysSQL}) 
+                            VALUES (${insertPFFData.valsSQL});`;
+
+      await queryDB(insertPFFQuery, insertPFFData.params);  
+    }
     res.json({done: true, success: true });
   } catch (err) {
     res.status(500).json(error);
@@ -430,7 +452,7 @@ router.post('/add/pff/team', async (req, res) => {
                             (${insertPFFData.keysSQL}) 
                           VALUES (${insertPFFData.valsSQL});`;
 
-    await queryDB(insertPFFQuery, insertPFFData.params, res);  
+    await queryDB(insertPFFQuery, insertPFFData.params);  
     res.json({done: true, success: true });
   } catch (err) {
     res.status(500).json(error);
@@ -445,20 +467,77 @@ router.post('/add/pff/week', async (req, res) => {
                             (${insertPFFData.keysSQL}) 
                           VALUES (${insertPFFData.valsSQL});`;
 
-    await queryDB(insertPFFQuery, insertPFFData.params, res);  
+    await queryDB(insertPFFQuery, insertPFFData.params);  
     res.json({done: true, success: true });
   } catch (err) {
     res.status(500).json(error);
   }
 });
 
-router.get('/pff/get/currentweek/:season', async (req, res) => {
+router.get('/fix/pff/teams/', async (req,res) => {
   try {
-    var week = req.params.week;
-    var wquery = ` SELECT MAX(week) as mw FROM nfl.pff_qb_stats WHERE season = ${req.params.season}`;
+    
+    var pff_teams_response = await fetch(`https://premium.pff.com/api/v1/teams?season=${this.season}&league=nfl`);      
+    var pff_teams_data = await pff_teams_response.json();
+    //console.log('wd:', pff_teams_data);
+    var pff_teams = pff_teams_data.teams;
+    var pff_divisions = pff_teams_data.franchise_groups;
 
-    var weekinfo = await queryDB(wquery, [], res);
-    res.json({done: true, success: true, week: weekinfo[0].mw });
+    for(var t=0;t<pff_teams.length;t++) {
+
+    }
+
+    res.json({done: true, success: true });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.get('/fix/nfl/teams/', async (req, res) => {
+  try {
+    var pff_teams_query = 'SELECT * FROM nfl.pff_teams WHERE season = 2020 and franchise_id = 32';    
+    var pff_teams = await queryDB(pff_teams_query, []);
+    
+    var nfl_teams_static_query = 'SELECT * FROM nfl.teams WHERE season = 2019 and teamId = 5110';
+    var nfl_teams_defaults = await queryDB(nfl_teams_static_query);
+
+    //console.log('pff_teams', pff_teams.length);
+
+    if(nfl_teams_defaults.length > 0 && pff_teams.length > 0) {
+      for(var n=0;n<nfl_teams_defaults.length;n++) {
+        var nfl_team = nfl_teams_defaults[n];
+        //console.log('nfl_team', nfl_team);
+        var pff_team_index = pff_teams.findIndex((v, i) => { return v.nickname === nfl_team.nick })
+        //console.log('pff_team_index', pff_team_index);
+        var pff_team = pff_teams[pff_team_index];
+
+        for(s=2008;s<2019;s++) {
+          var team_update = {
+            season: s,
+            teamId: nfl_team.teamId,
+            abbr: nfl_team.abbr,
+            cityState: pff_team.city,
+            fullName: pff_team.city + ' ' + pff_team.nickname,
+            nick: pff_team.nickname,
+            conferenceAbbr: nfl_team.conferenceAbbr,
+            divisionAbbr: nfl_team.divisionAbbr
+          };
+
+          let insertPFFQuery = `UPDATE nfl.pff_teams SET abbreviation = '${nfl_team.abbr}'
+                                WHERE season = ${s} AND nickname = '${nfl_team.nick}'`;
+          var pff_inserted = await queryDB(insertPFFQuery);
+
+          var insertNFLData = getKeysAndValues(team_update);
+          let insertNFLQuery = `INSERT INTO nfl.teams
+                                  (${insertNFLData.keysSQL}) 
+                                VALUES (${insertNFLData.valsSQL});`;
+          var nfl_inserted = await queryDB(insertNFLQuery, insertNFLData.params);             
+          if(pff_inserted && nfl_inserted) console.log('added: ' + nfl_team.nick + ' season: ' + s);
+        }
+      }
+    }
+  
+    res.json({done: true, success: true });
   } catch (err) {
     res.status(500).json(error);
   }
@@ -471,8 +550,20 @@ router.get('/get/pff/games/:season/:week', async (req, res) => {
                     (SELECT t.abbreviation FROM nfl.pff_teams t WHERE t.franchise_id = g.home_team_id and t.season = g.season) as home_team
                   FROM nfl.pff_games g
                   WHERE g.season = ${req.params.season} AND g.week = ${req.params.week}`;
-    var games = await queryDB(gamesQ, [], res);
+    var games = await queryDB(gamesQ, []);
     res.json({done: true, success: true, games: games });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.get('/get/pff/player_list_ids/', async (req, res) => {
+  try {
+    
+    var qbsquery = `SELECT DISTINCT p.player_id, p.player FROM nfl.pff_qb_stats p`;
+    var qbs = await queryDB(qbsquery, []);
+    res.json({done: true, success: true, qbs: qbs });
+  
   } catch (err) {
     res.status(500).json(error);
   }
@@ -480,9 +571,15 @@ router.get('/get/pff/games/:season/:week', async (req, res) => {
 
 router.get('/get/pff/player_list/:season/', async (req, res) => {
   try {
-    var qbsquery = `SELECT DISTINCT p.player, p.id FROM nfl.pff_qb_stats p WHERE p.season = ${req.params.season} GROUP BY player`;
-    var qbs = await queryDB(qbsquery, [], res);
-    res.json({done: true, success: true, qbs: qbs });
+    if (req.params.season) {
+      var qbsquery = `SELECT DISTINCT p.player FROM nfl.pff_qb_stats p WHERE p.season = ${req.params.season} GROUP BY player`;
+      var qbs = await queryDB(qbsquery, []);
+      res.json({done: true, success: true, qbs: qbs });
+    } else {
+      var qbsquery = `SELECT DISTINCT p.player_id, p.player FROM pff_qb_stats p`;
+      var qbs = await queryDB(qbsquery, []);
+      res.json({done: true, success: true, qbs: qbs });
+    }
   } catch (err) {
     res.status(500).json(error);
   }
@@ -491,7 +588,17 @@ router.get('/get/pff/player_list/:season/', async (req, res) => {
 router.get('/get/pff/players/:season/:week', async (req, res) => {
   try {
     var qbsquery = `SELECT p.* FROM nfl.pff_qb_stats p WHERE p.season = ${req.params.season} AND p.week = ${req.params.week}`;
-    var qbs = await queryDB(qbsquery, [], res);
+    var qbs = await queryDB(qbsquery, []);
+    res.json({done: true, success: true, qbs: qbs });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.get('/get/pff/stats/', async (req, res) => {
+  try {
+    var qbsquery = `SELECT p.*, pl.birthday FROM nfl.pff_qb_stats p JOIN nfl.pff_players pl ON p.player_id = pl.pff_id ORDER BY p.season, p.week`;
+    var qbs = await queryDB(qbsquery, []);
     res.json({done: true, success: true, qbs: qbs });
   } catch (err) {
     res.status(500).json(error);
@@ -502,9 +609,9 @@ router.post('/get/player/name/', async (req, res) => {
   try {
     var playerData = req.body;
     var playerq = ` SELECT p.* 
-                    FROM nfl.players p 
-                    WHERE p.season = ${playerData.season} and p.displayName = '${playerData.name}'`;
-    var player = await queryDB(playerq, [], res);
+                    FROM nfl.pff_players p 
+                    WHERE p.season = ? and p.full_name = ?`;
+    var player = await queryDB(playerq, [playerData.season, playerData.name]);
     res.json({done: true, success: true, player: player[0] });
   } catch (err) {
     res.status(500).json(error);
@@ -514,12 +621,16 @@ router.post('/get/player/name/', async (req, res) => {
 router.get('/get/jakes/:season/:week', async (req, res) => {
   try {
     let weekQuery = '';
+    let week = parseInt(req.params.week);
+    let season = parseInt(req.params.season);
     let orderByAdd = 'p.jake_score DESC, p.ultimate_score DESC';
     if(req.params.week) {
-      weekQuery = `and p.week = ${req.params.week}`;
+      weekQuery = `and p.week = ${week}`;
     } else {
       orderByAdd = 'p.week, p.jake_score DESC, p.ultimate_score DESC';
     }
+
+    //console.log('reqp', req.params);
 
     var jakesQ = `SELECT  p.player, p.att, p.comp, p.fumbles, p.ints, p.rush_carries, p.rush_tds,
                           p.rush_yds, p.tds, p.yds, 
@@ -531,23 +642,36 @@ router.get('/get/jakes/:season/:week', async (req, res) => {
                           pl.birthDate
                   FROM nfl.pff_qb_stats p
                     JOIN nfl.pff_games g ON p.team_id = g.loser_id and p.season = g.season and p.week = g.week
-                    JOIN nfl.pff_teams t ON p.team_id = t.franchise_id and p.season = t.season
-                    JOIN nfl.players pl ON pl.season = p.season AND pl.displayName = p.player
-                  WHERE p.season = ${req.params.season} ${weekQuery}
+                    JOIN nfl.pff_teams t ON p.team = t.abbreviation and p.season = t.season
+                    JOIN nfl.pff_players pl ON pl.season = p.season AND pl.player_id = p.player_id and pl.position = 'QB'
+                  WHERE p.season = ${season} ${weekQuery}
                   ORDER BY ${orderByAdd} `;
 
-    var jakes = await queryDB(jakesQ, [], res);
+    var jakes = await queryDB(jakesQ, []);
+
     res.json({done: true, success: true, jakes: jakes });
   } catch (err) {
-    res.status(500).json(error);
+    res.status(500).json(err);
   }
 });
 
 router.get('/get/pff/team/:team_abbr/:season', async (req, res) => {
   try {
     var teamq = `SELECT t.* FROM nfl.pff_teams t WHERE t.abbreviation = '${req.params.team_abbr}' and t.season = ${req.params.season}`;
-    var team = await queryDB(teamq, [], res);
+    var team = await queryDB(teamq, []);
     res.json({done: true, success: true, team: team });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.get('/pff/get/currentweek/:season', async (req, res) => {
+  try {
+    var week = req.params.week;
+    var wquery = ` SELECT MAX(week) as mw FROM nfl.pff_qb_stats WHERE season = ${req.params.season}`;
+
+    var weekinfo = await queryDB(wquery, []);
+    res.json({done: true, success: true, week: weekinfo[0].mw });
   } catch (err) {
     res.status(500).json(error);
   }
@@ -567,7 +691,7 @@ router.post('/update/jakes', async (req, res) => {
     var scoreData = req.body;
     var scoreQuery = `UPDATE nfl.pff_games SET score_away = ${scoreData.score_away}, score_home = ${scoreData.score_home}
                        WHERE away_team_id = ${scoreData.away_team_id} AND home_team_id = ${scoreData.home_team_id} AND season = ${scoreData.season} AND week = ${scoreData.week}`;
-    var scoreOK = await queryDB(scoreQuery, [], res);
+    var scoreOK = await queryDB(scoreQuery, []);
 
     res.json({done: true, success: scoreOK });
   } catch (err) {
@@ -581,7 +705,7 @@ router.post('/update/pff/week/', async (req, res) => {
     var updateData = getKeysAndValuesForUpdate(playerData);
     var play_upd = `  UPDATE nfl.pff_qb_stats SET ${updateData.sql} 
                       WHERE id = ${playerData.id} AND season = ${playerData.season} AND week = ${playerData.week}`;
-    var playerOK = await queryDB(play_upd, updateData.params, res);
+    var playerOK = await queryDB(play_upd, updateData.params);
 
     res.json({done: true, success: playerOK });
   } catch (err) {
@@ -594,7 +718,7 @@ router.post('/update/pff/game/score', async (req, res) => {
     var scoreData = req.body;
     var scoreQuery = `UPDATE nfl.pff_games SET score_away = ${scoreData.score_away}, score_home = ${scoreData.score_home}
                        WHERE away_team_id = ${scoreData.away_team_id} AND home_team_id = ${scoreData.home_team_id} AND season = ${scoreData.season} AND week = ${scoreData.week}`;
-    var scoreOK = await queryDB(scoreQuery, [], res);
+    var scoreOK = await queryDB(scoreQuery, []);
     res.json({done: true, success: scoreOK });
   } catch (err) {
     res.status(500).json(error);
@@ -606,7 +730,20 @@ router.post('/update/pff/player/', async (req, res) => {
     var playerData = req.body;
     var play_upd = `  UPDATE nfl.pff_qb_stats SET nfl_player_id = ${playerData.player_id} 
                       WHERE id = ${playerData.id}`;
-    var playerOK = await queryDB(play_upd, [], res);
+    var playerOK = await queryDB(play_upd, []);
+
+    res.json({done: true, success: playerOK });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.post('/update/pff/ultimate/', async (req, res) => {
+  try {
+    var playerData = req.body;
+    var play_upd = `  UPDATE nfl.pff_qb_stats SET ultimate_score = ${playerData.ultimate} 
+                      WHERE id = ${playerData.id}`;
+    var playerOK = await queryDB(play_upd, []);
 
     res.json({done: true, success: playerOK });
   } catch (err) {
