@@ -131,8 +131,8 @@ async function parseYahooPassers(yahooData, season, week) {
       player_stats[stat.statId] = stat.value;
     });
 
-    if(player.displayName === 'Dwayne Haskins' && season === 2019) console.log(player_stats);
-    if(player.team.abbreviation === 'WAS') player.team.abbreviation = 'WSH';
+    //if(player.displayName === 'Dwayne Haskins' && season === 2019) console.log(player_stats);
+    //if(player.team.abbreviation === 'WAS') player.team.abbreviation = 'WSH';
     var teamId = 0;
     if(season >= 2020) {
       var teamIdR = await fetch(`http://lvh.me:3000/api/v1/get/pff/team/${player.team.abbreviation}/${season}`);
