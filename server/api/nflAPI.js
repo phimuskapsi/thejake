@@ -22,15 +22,15 @@ class NFLAPI {
     // eslint-disable-next-line
     //console.log('Filling DB for 2011 ----> 2012 seasons. Hold on to your butts!');
 
-      this.calcUlts().then((result) => {
+      this.addDatesForGames().then((result) => {
         console.log('Result: ', result);
       });
 
     // eslint-disable-next-line
     //console.log('Fixing Games...');
-    //this.fixGames().then((result) => {
-    //  console.log('Result: ', result);
-    //});
+    this.calcUlts().then((result) => {
+      console.log('Result: ', result);
+    });
   }
 
   async calculateUltimate(player_stats, birthdate) {
@@ -45,7 +45,7 @@ class NFLAPI {
     var qbr = player_stats.qbr;
     var jake = ((parseInt(player_stats.ints) + parseInt(player_stats.fumbles)) * 1/6) * 100;
     var perfect = 1075;
-    var birthday = 10000;
+    var birthday_score = 10000;
     var ultimate = 0;
     // Idea is that a perfect jake is 1075 + 10000 = 11075 (jan 10, 1975 - delhomme's bday!)
     // Jake score makes up the majority.
@@ -69,16 +69,18 @@ class NFLAPI {
   
     // 1000 only gets us soooo far.
     ultimate += 75;
-    var today = moment().format('YYYY-MM-DD');
-  
-    if(birthdate === today) {
-      ultimate += birthday;
+
+    var game_day = moment(player_stats.game_date).format('MM-DD');
+    var bday = moment(player_stats.birthday, 'YYYY-MM-DD').format('MM-DD');
+
+    if(bday === game_day) {
+      ultimate += birthday_score;
     }
-  
-    if(ultimate > (perfect + birthday)) {
-      ultimate = perfect + birthday;
+
+    if(ultimate > (perfect + birthday_score)) {
+      ultimate = perfect + birthday_score;
     }
-  
+    
     return ultimate;  
   };
 
@@ -87,6 +89,7 @@ class NFLAPI {
       var tempPlayersResp = await fetch(`http://lvh.me:3000/api/v1/get/pff/stats/`);
       var tempPlayersJSON = await tempPlayersResp.json();
       var tempPlayers = tempPlayersJSON.qbs;
+      var records = 0;
 
       for(var tp=0;tp<tempPlayers.length;tp++) {
         var player = tempPlayers[tp];
@@ -107,9 +110,11 @@ class NFLAPI {
         }
 
         var pi = tp + 1;
-        console.log(`player #${pi} calculated: ${ultimate}`)
+        records++;
+        //console.log(`player #${pi} calculated: ${ultimate}`)
       }
 
+      return 'ulimates complete. #records processed: ' + records.toString();
     } catch (err) {
       console.log('error:', err);
       return err;
@@ -152,6 +157,56 @@ class NFLAPI {
       console.log('error:', err);
       return err;
     }  
+  }
+
+  async addDatesForGames() {
+    try {
+      var records = 0;
+      // Need to get things in this order: teams, games, players, player_stats, historical calcs
+      for(var s=2008;s<=2020;s++) {
+        for(var w=1;w<=21;w++) {  
+          if(s === 2020 && w > 3) continue;
+          var gamesDataResp = await fetch(`https://premium.pff.com/api/v1/games?season=${s}&week=${w}&league=nfl`);
+          var gamesDataJSON = await gamesDataResp.json();
+          var gamesData = gamesDataJSON.games;
+
+          for(var g=0;g<gamesData.length;g++) {
+            var game = gamesData[g];
+            var game = {
+              season: s,
+              week: w,
+              stadium_id: game.stadium_id,
+              pff_id: game.id,
+              away_team_id: game.away_franchise_id,
+              home_team_id: game.home_franchise_id,
+              game_date: moment(game.start).format('YYYY-MM-DD')
+            };
+
+            var pff_game_insert_r = await fetch(`http://lvh.me:3000/api/v1/update/pff/game/date`, {
+              method: 'post',              
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(game)
+            });
+            var pff_game_insert = await pff_game_insert_r.json();
+            if(pff_game_insert) {
+              var gn = g+1;
+              //console.log(`updated game # ${gn} for ${w} - ${s}...`);
+            }
+          }
+
+          console.log(`completed games for ${w} - ${s}...`);
+          records++;
+        }
+      }
+
+      return 'game dates added. #records processed: ' + records.toString();
+    } catch (err) {
+      console.log('error:', err);
+      return err;
+    }
   }
 
   async megaFill() {

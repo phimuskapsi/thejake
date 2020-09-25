@@ -171,7 +171,7 @@
         this.refreshWeek().then(() => {
           this.getJakes();
           this.startUpdater();
-          this.getHistory();
+          this.getHistory(false);
         });
       });
     },
@@ -265,7 +265,7 @@
           this.showJakeRankings = true;
         }
       },
-      async getHistory () {       
+      async getHistory (refresh = true) {       
         if (this.selectedSeason > 0) {
           if(this.selectedWeek > 0) {           
             if (this.history[this.selectedSeason][this.selectedWeek].players.length > 0) {
@@ -280,8 +280,11 @@
 
             this.currentWeek = this.selectedWeek;
             this.currentSeason = this.selectedSeason;
-            await this.refreshWeek(this.currentSeason, this.currentWeek);
-            this.getJakes();
+
+            if(refresh) {
+              await this.refreshWeek(this.currentSeason, this.currentWeek);
+              this.getJakes();
+            }
           } 
 
           return;
@@ -292,7 +295,9 @@
       },      
       async refreshWeek(season = 0, week = 0) {
         this.lastUpdated = moment().millisecond();        
-        let refresh = this.NFLData.updateCurrentWeek(season, week);
+        if(season >= 2020) {
+          let refresh = this.NFLData.updateCurrentWeek(season, week);
+        }
       },
       async setupData () {   
         await this.NFLData.init();
