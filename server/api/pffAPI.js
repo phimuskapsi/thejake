@@ -540,7 +540,7 @@ async function setJakePositions(season = 2020, weeks = 21) {
           jake_position: pos
         };
 
-        var update_pff_idr = await fetch(`http://lvh.me:3000/api/v1/update/pff/player/`, {
+        var update_pff_idr = await fetch(`http://lvh.me:3000/api/v1/update/pff/jake_pos/`, {
           method: 'post',              
           headers: {
             'Accept': 'application/json',
@@ -764,28 +764,6 @@ router.post('/add/pff/game', async (req, res) => {
   }
 });
 
-router.post('/add/nfl/player', async (req, res) => {
-  try {
-    var playerData = req.body;
-    var insertPFFData = getKeysAndValues(playerData);
-
-    var pquery = ` SELECT COUNT(*) as listed FROM nfl.pff_players WHERE nfl_id = ${playerData.nfl_id}`;
-    var pcountres = await queryDB(pquery, []);
-    var pcount = pcountres[0] && pcountres[0].listed ? parseInt(pcountres[0].listed) > 0 : false;
-
-    if(!pcount) {
-      let insertPFFQuery = `INSERT INTO nfl.pff_players
-                              (${insertPFFData.keysSQL}) 
-                            VALUES (${insertPFFData.valsSQL});`;
-
-      await queryDB(insertPFFQuery, insertPFFData.params);  
-    }
-    res.json({done: true, success: true });
-  } catch (err) {
-    res.status(500).json(error);
-  }
-});
-
 router.post('/add/pff/team', async (req, res) => {
   try {
     var weekData = req.body;
@@ -810,75 +788,6 @@ router.post('/add/pff/week', async (req, res) => {
                           VALUES (${insertPFFData.valsSQL});`;
 
     await queryDB(insertPFFQuery, insertPFFData.params);  
-    res.json({done: true, success: true });
-  } catch (err) {
-    res.status(500).json(error);
-  }
-});
-
-router.get('/fix/pff/teams/', async (req,res) => {
-  try {
-    
-    var pff_teams_response = await fetch(`https://premium.pff.com/api/v1/teams?season=${this.season}&league=nfl`);      
-    var pff_teams_data = await pff_teams_response.json();
-    //console.log('wd:', pff_teams_data);
-    var pff_teams = pff_teams_data.teams;
-    var pff_divisions = pff_teams_data.franchise_groups;
-
-    for(var t=0;t<pff_teams.length;t++) {
-
-    }
-
-    res.json({done: true, success: true });
-  } catch (err) {
-    res.status(500).json(error);
-  }
-});
-
-router.get('/fix/nfl/teams/', async (req, res) => {
-  try {
-    var pff_teams_query = 'SELECT * FROM nfl.pff_teams WHERE season = 2020 and franchise_id = 32';    
-    var pff_teams = await queryDB(pff_teams_query, []);
-    
-    var nfl_teams_static_query = 'SELECT * FROM nfl.teams WHERE season = 2019 and teamId = 5110';
-    var nfl_teams_defaults = await queryDB(nfl_teams_static_query);
-
-    //console.log('pff_teams', pff_teams.length);
-
-    if(nfl_teams_defaults.length > 0 && pff_teams.length > 0) {
-      for(var n=0;n<nfl_teams_defaults.length;n++) {
-        var nfl_team = nfl_teams_defaults[n];
-        //console.log('nfl_team', nfl_team);
-        var pff_team_index = pff_teams.findIndex((v, i) => { return v.nickname === nfl_team.nick })
-        //console.log('pff_team_index', pff_team_index);
-        var pff_team = pff_teams[pff_team_index];
-
-        for(s=2008;s<2019;s++) {
-          var team_update = {
-            season: s,
-            teamId: nfl_team.teamId,
-            abbr: nfl_team.abbr,
-            cityState: pff_team.city,
-            fullName: pff_team.city + ' ' + pff_team.nickname,
-            nick: pff_team.nickname,
-            conferenceAbbr: nfl_team.conferenceAbbr,
-            divisionAbbr: nfl_team.divisionAbbr
-          };
-
-          let insertPFFQuery = `UPDATE nfl.pff_teams SET abbreviation = '${nfl_team.abbr}'
-                                WHERE season = ${s} AND nickname = '${nfl_team.nick}'`;
-          var pff_inserted = await queryDB(insertPFFQuery);
-
-          var insertNFLData = getKeysAndValues(team_update);
-          let insertNFLQuery = `INSERT INTO nfl.teams
-                                  (${insertNFLData.keysSQL}) 
-                                VALUES (${insertNFLData.valsSQL});`;
-          var nfl_inserted = await queryDB(insertNFLQuery, insertNFLData.params);             
-          if(pff_inserted && nfl_inserted) console.log('added: ' + nfl_team.nick + ' season: ' + s);
-        }
-      }
-    }
-  
     res.json({done: true, success: true });
   } catch (err) {
     res.status(500).json(error);
@@ -1159,7 +1068,7 @@ router.post('/update/pff/game/score', async (req, res) => {
   }
 });
 
-router.post('/update/pff/player/', async (req, res) => {
+router.post('/update/pff/jake_pos/', async (req, res) => {
   try {
     var playerData = req.body;
     var play_upd = `  UPDATE nfl.pff_qb_stats SET jake_position = ${playerData.jake_position} 
