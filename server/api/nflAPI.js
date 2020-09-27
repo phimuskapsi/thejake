@@ -22,15 +22,155 @@ class NFLAPI {
     // eslint-disable-next-line
     //console.log('Filling DB for 2011 ----> 2012 seasons. Hold on to your butts!');
 
-      this.addDatesForGames().then((result) => {
+      //this.addDatesForGames().then((result) => {
+      //  console.log('Result: ', result);
+      //});
+    this.setJakePositions().then((res) => {
+      console.log('Result: ', res);    
+      this.calculateHistoricalJakes().then((result) => {
         console.log('Result: ', result);
+        this.calcUlts().then((result2) => {
+          console.log('Result: ', result2);
+        });      
       });
-
+    });
     // eslint-disable-next-line
     //console.log('Fixing Games...');
-    this.calcUlts().then((result) => {
-      console.log('Result: ', result);
-    });
+    
+
+    
+  }
+
+  async setJakePositions() {
+    try {
+      for(var s=2008;s<=2020;s++) {
+        console.log('starting season: ' + s.toString());
+        for(var w=1;w<=21;w++) {
+          console.log('starting week: ' + w.toString());
+          if(s === 2020 && w > 3) continue;
+          var tempPlayersResp = await fetch(`http://lvh.me:3000/api/v1/get/jakes/${s}/${w}`);
+          var tempPlayersJSON = await tempPlayersResp.json();
+          var tempPlayers = tempPlayersJSON.jakes;
+          var records = 0;
+
+          // Players will be all sorted by jake order
+          // It will also sort by ultimate for ties
+          // By week
+          var pos = 0;
+          var last_score = 0.00;
+          for(var tp=0;tp<tempPlayers.length;tp++) {
+            var player = tempPlayers[tp];
+            if(player.jake_score === 0) {
+              pos = 0;
+            } else {
+              if(last_score !== player.jake_score) {
+                last_score = player.jake_score
+                pos++;
+              }
+            }
+            
+
+            var update_pff_data = {
+              id: player.id,
+              jake_position: pos
+            };
+
+            var update_pff_idr = await fetch(`http://lvh.me:3000/api/v1/update/pff/player/`, {
+              method: 'post',              
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(update_pff_data)
+            });
+
+            var update_pff_idj = await update_pff_idr.json();
+            //console.log('pff resp:', update_pff_idj);
+            records++;
+            if(!update_pff_idj.success) {
+              console.log('failed, last data:', update_pff_data);
+            }
+          }
+          
+        }
+      }
+
+      return 'jakes positioned and complete. #records processed: ' + records.toString();
+    } catch (err) {
+      console.log('error:', err);
+      return err;
+    }
+  }
+
+  async calculateHistoricalJakes() {
+    try {
+      var records = 0;
+      var players = {};
+      for(var s=2008;s<=2020;s++) {
+        console.log('starting season: ' + s.toString());
+        
+        var tempPlayersResp = await fetch(`http://lvh.me:3000/api/v1/get/jakes/${s}/0`);
+        var tempPlayersJSON = await tempPlayersResp.json();
+        var tempPlayers = tempPlayersJSON.jakes;
+        
+        for(var t=0;t<tempPlayers.length;t++) {
+          var player = tempPlayers[t];
+          var historical_record = {
+            pff_id: 0,
+            jake_position_1: 0,
+            jake_position_2: 0,
+            jake_position_3: 0,
+            jake_position_4: 0,
+            record_jake: 0.00
+          };
+
+          if(!players[player.player_id]) {
+            historical_record.pff_id = player.player_id;
+            players[player.player_id] = historical_record;
+          }
+
+          if(player.jake_score > 0) {
+            if(player.jake_score > players[player.player_id].record_jake) players[player.player_id].record_jake = player.jake_score;        
+            switch(player.jake_position) {
+              case 1: 
+                players[player.player_id].jake_position_1++;
+              break;
+
+              case 2:
+                players[player.player_id].jake_position_2++;
+              break;
+
+              case 3:
+                players[player.player_id].jake_position_3++;
+              break;
+
+              case 4:
+              default:
+                players[player.player_id].jake_position_4++;
+              break;
+            }
+          }
+        }
+      }
+
+      for(var player_id in players) {
+        var historicalPlayer = players[player_id];
+        var update_pff_idr = await fetch(`http://lvh.me:3000/api/v1/update/jake_history/`, {
+          method: 'post',              
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(historicalPlayer)
+        });
+
+        var update_pff_idj = await update_pff_idr.json();           
+        //console.log(`historical player: ${player_id} OK: ${update_pff_idj.success}`);
+      } 
+    } catch (err) {
+      console.log('error:', err);
+      return err;
+    }
   }
 
   async calculateUltimate(player_stats, birthdate) {
@@ -43,29 +183,60 @@ class NFLAPI {
     var sacks = player_stats.sacks;
     var fumbles = player_stats.fumbles;
     var qbr = player_stats.qbr;
-    var jake = ((parseInt(player_stats.ints) + parseInt(player_stats.fumbles)) * 1/6) * 100;
+    var jake = parseFloat(((parseInt(player_stats.ints) + parseInt(player_stats.fumbles)) * 1/6) * 100);
     var perfect = 1075;
     var birthday_score = 10000;
     var ultimate = 0;
+    //var history = {};
+
     // Idea is that a perfect jake is 1075 + 10000 = 11075 (jan 10, 1975 - delhomme's bday!)
+    // Gotta get some historical shit. 
+    var histResp = await fetch(`http://lvh.me:3000/api/v1/get/pff/player_history/${player_stats.player_id}`);
+    var histRespJSON = await histResp.json();
+    var history = histRespJSON.history;
+
+    //console.log('history', history);
+    //return;
+
+    // History data that we care about is jake position totals. 
+    // There is also a 'gameCount' field that we can use to get totals
+    // History should account for 20% of the score
+    // Jakes total is slightly weighted. Heavy weight on first.
+    var jp1 = history.jake_position_1 ? history.jake_position_1 : 0;
+    var jp2 = history.jake_position_3 ? history.jake_position_2 : 0;
+    var jp3 = history.jake_position_3 ? history.jake_position_3 : 0;
+    var jp4 = history.jake_position_4 ? history.jake_position_4 : 0;
+
+    var raw_jakes_total = jp1 + jp2 + jp3 + jp4;
+    var jakes_total = ( 
+      (jp1 * 0.65) + 
+      (jp2 * 0.20) + 
+      (jp3 * 0.10) + 
+      (jp4 * 0.05)
+    );
+
+    var game_total = history.gameCount;
+    var history_score = (jakes_total * (1 + (raw_jakes_total/game_total)))*10;
+    if(history_score > 200) history_score = 200.00;
+
     // Jake score makes up the majority.
     ultimate += jake * 5; // up to 500 (or more theoretically)
       
     // Sacks add 100 more. If 10 or more, 100
+    if(!sacks) sacks = 0;
     ultimate += (sacks > 10 ? 100 : sacks * 10);
   
     // In this case, this will flip qbr upside down.
     // A 0.00 qbr (1.00) = 158.3 points, and a 158.3 qbr = 1 point;
     // It multiplies the result to get a value max of 300;
+    if(!qbr) qbr = 0;
     if(qbr === 0) qbr = 1;
-    ultimate +=  Math.ceil(((1/qbr)*158.3)*1.895);
+    var qbr_score = (((1/qbr)*158.3)*1.895);
+    if(qbr_score > 300) qbr_score = 300.00
+    ultimate += qbr_score    
     
     // TD's work like sacks in reverse, 0 td's = no subtraction, perfect is achievable.
     ultimate -= (td > 10 ? 100 : td * 10);
-  
-    // ints add 100 more. If 10 or more, 100
-    // Yes, I'm double dipping. I make the rules.
-    ultimate += (int > 10 ? 100 : int * 10);
   
     // 1000 only gets us soooo far.
     ultimate += 75;
@@ -73,7 +244,8 @@ class NFLAPI {
     var game_day = moment(player_stats.game_date).format('MM-DD');
     var bday = moment(player_stats.birthday, 'YYYY-MM-DD').format('MM-DD');
 
-    if(bday === game_day) {
+    // Only add the bday penalty if the jake score is greater than 0
+    if(bday === game_day && jake > 0.00) {
       ultimate += birthday_score;
     }
 
@@ -81,40 +253,107 @@ class NFLAPI {
       ultimate = perfect + birthday_score;
     }
     
-    return ultimate;  
+    // If jake is zero, then they are not eligible for the rating.
+    if(jake === 0.00) ultimate = 0.00;
+    return ultimate.toFixed(3);  
   };
 
   async calcUlts() {
     try {
-      var tempPlayersResp = await fetch(`http://lvh.me:3000/api/v1/get/pff/stats/`);
+      for(var s=2008;s<=2020;s++) {
+        console.log(`starting season #${s}.`);
+        var tempPlayersResp = await fetch(`http://lvh.me:3000/api/v1/get/jakes/${s}/0`);
+        var tempPlayersJSON = await tempPlayersResp.json();
+        var tempPlayers = tempPlayersJSON.jakes;
+        
+        var records = 0;
+
+        //console.log('tp:', tempPlayers);
+        //return;
+
+        for(var tp=0;tp<tempPlayers.length;tp++) {
+          var player = tempPlayers[tp];
+          var ultimate = await this.calculateUltimate(player, player.birthday);
+          if(ultimate) {
+            var pff_player_insert_r = await fetch(`http://lvh.me:3000/api/v1/update/pff/ultimate/`, {
+              method: 'post',              
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({id: player.id, ultimate: ultimate})
+            });
+            var pff_player_insert = await pff_player_insert_r.json();
+            if(pff_player_insert) {
+              //console.log('added: ', player.id);
+            }
+          } else {
+            console.log('ultimate', ultimate);
+            throw 'failed to get ultimate score';
+          }
+
+          var pi = tp + 1;
+          records++;
+          console.log(`player #${pi} calculated: ${ultimate}`)
+        }
+      }
+
+      return 'ulimates complete. #records processed: ' + records.toString();
+    } catch (err) {
+      console.log('error:', err);
+      return err;
+    }
+  }
+
+  async fixMissingPlayers() {
+    try {
+      console.log('Fixing missing players...');
+      var tempPlayersResp = await fetch(`http://lvh.me:3000/api/v1/get/pff/player_list_ids/`);
       var tempPlayersJSON = await tempPlayersResp.json();
       var tempPlayers = tempPlayersJSON.qbs;
       var records = 0;
 
+      var tempDetailsResp = await fetch(`http://lvh.me:3000/api/v1/get/pff/player_details/`);
+      var tempDetailsJSON = await tempDetailsResp.json();
+      var tempDetails = tempDetailsJSON.qbs;
+
       for(var tp=0;tp<tempPlayers.length;tp++) {
         var player = tempPlayers[tp];
-        var ultimate = await this.calculateUltimate(player, player.birthday);
-        if(ultimate) {
-          var pff_player_insert_r = await fetch(`http://lvh.me:3000/api/v1/update/pff/ultimate/`, {
+        var detailIndex = tempDetails.findIndex((v,i) => {
+          return v.player_id === player.player_id;
+        });
+
+        if(detailIndex === -1) {
+          // Oops! No player info available, let's try and re-grab it!
+          var playerInfoResp = await fetch(`https://premium.pff.com/api/v1/players?league=nfl&id=${player.player_id}`);
+          var playerInfoJSON = await playerInfoResp.json();
+          var playerInfo = playerInfoJSON.players[0];
+
+          var tplayer = {
+            pff_id: playerInfo.id,
+            first_name: playerInfo.first_name,
+            last_name: playerInfo.last_name,
+            full_name: player.player,
+            birthday: playerInfo.dob,
+            hometown: ''
+          }; 
+
+          var pff_player_insert_r = await fetch(`http://lvh.me:3000/api/v1/add/pff/player/`, {
             method: 'post',              
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({id: player.id, ultimate: ultimate})
+            body: JSON.stringify(tplayer)
           });
           var pff_player_insert = await pff_player_insert_r.json();
-        } else {
-          console.log('ultimate', ultimate);
-          throw 'failed to get ultimate score';
+          if(pff_player_insert.success) {
+            console.log(`Added missing player: ${tplayer.full_name}. ID: ${tplayer.pff_id}`);
+          }
+          records++;
         }
-
-        var pi = tp + 1;
-        records++;
-        //console.log(`player #${pi} calculated: ${ultimate}`)
       }
-
-      return 'ulimates complete. #records processed: ' + records.toString();
+      return 'players fixed probably. #records processed: ' + records.toString();
     } catch (err) {
       console.log('error:', err);
       return err;
