@@ -201,7 +201,16 @@ async function calculateYahooUltimate(player_stats, player, season, player_id) {
   var ultimate = 0;
   // Idea is that a perfect jake is 1075 + 10000 = 11075 (jan 10, 1975 - delhomme's bday!)
   // Gotta get some historical shit. 
-  var histResp = await fetch(`http://lvh.me:3000/api/v1/get/pff/player_history/${player_stats.player_id}`);
+  var search_name = player.split(' ')[0] + ' ' + player.split(' ')[1];
+  var histResp = await fetch(`http://lvh.me:3000/api/v1/get/pff/player_history_name/`, {
+    method: 'post',              
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name: search_name  })
+  });
+
   var histRespJSON = await histResp.json();
   var history = histRespJSON.history;
 
@@ -209,21 +218,25 @@ async function calculateYahooUltimate(player_stats, player, season, player_id) {
   // There is also a 'gameCount' field that we can use to get totals
   // History should account for 20% of the score
   // Jakes total is slightly weighted. Heavy weight on first.
-  var jp1 = history.jake_position_1 ? history.jake_position_1 : 0;
-  var jp2 = history.jake_position_3 ? history.jake_position_2 : 0;
-  var jp3 = history.jake_position_3 ? history.jake_position_3 : 0;
-  var jp4 = history.jake_position_4 ? history.jake_position_4 : 0;
+  if(!history) {
+    history_score = 0.00;
+  } else {
+    var jp1 = history.jake_position_1 ? history.jake_position_1 : 0;
+    var jp2 = history.jake_position_2 ? history.jake_position_2 : 0;
+    var jp3 = history.jake_position_3 ? history.jake_position_3 : 0;
+    var jp4 = history.jake_position_4 ? history.jake_position_4 : 0;
 
-  var raw_jakes_total = jp1 + jp2 + jp3 + jp4;
-  var jakes_total = ( 
-    (jp1 * 0.65) + 
-    (jp2 * 0.20) + 
-    (jp3 * 0.10) + 
-    (jp4 * 0.05)
-  );
+    var raw_jakes_total = jp1 + jp2 + jp3 + jp4;
+    var jakes_total = ( 
+      (jp1 * 0.65) + 
+      (jp2 * 0.20) + 
+      (jp3 * 0.10) + 
+      (jp4 * 0.05)
+    );
 
-  var game_total = history.gameCount;
-  var history_score = (jakes_total * (1 + (raw_jakes_total/game_total)))*10;
+    var game_total = history.gameCount;
+    var history_score = (jakes_total * (1 + (raw_jakes_total/game_total)))*10;
+  }
   if(history_score > 200) history_score = 200.00;
 
   // Jake score makes up the majority.
@@ -450,7 +463,7 @@ async function parseYahooPassers(yahooData, season, week) {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name: search_name, season: season, week: week })
+      body: JSON.stringify({ name: search_name  })
     });
 
     var player_name_json = await player_name_resp.json();
@@ -459,7 +472,7 @@ async function parseYahooPassers(yahooData, season, week) {
     if(!player_name_json || !player_name_json.player || !player_name_json.player.pff_id) {
       // Can't find the player in the players db. 
       var pff_players_resp = await fetch(`https://www.pff.com/api/fantasy/stats/passing?&season=${season}&weeks=${week}`);
-      var pff_players = await pff_player_resp.json();
+      var pff_players = await pff_players_resp.json();
       
       var pffindex = pff_players.findIndex((player) => {
         return player.player === search_name
@@ -484,7 +497,7 @@ async function parseYahooPassers(yahooData, season, week) {
         fumbles: player_stats.FUMBLES_LOST,
         att: player_stats.PASSING_ATTEMPTS,
         comp: player_stats.PASSING_COMPLETIONS,
-        player: player.displayName,
+        player: search_name,
         player_id: player_id,
         rush_carries: 0,
         rush_tds: 0,
@@ -571,12 +584,21 @@ async function updateCurrentWeek(season, week = 0) {
     var locked = true;
     //var locked = await checkWeekLocked();
     //if(!locked) {}
+    var cweek = 0;
+    if(espn_current_stats) {
+      cweek = espn_current_stats.week.number;
+    }
+
+    if(week > 0){
+      cweek = week;
+    }
+
     if(season >= 2020) {
       var espn_current_stats_r = await fetch(`http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard`);      
       var espn_current_stats = await espn_current_stats_r.json();
       var espn_parsed_games = await parseESPNGames(espn_current_stats, season, week);
 
-      var l_games_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/games/${season}/${cweek}`);
+      var l_games_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/games/${season}/${week}`);
       var l_games_json = await l_games_resp.json();
       var l_games = l_games_json.games;
 
@@ -619,24 +641,17 @@ async function updateCurrentWeek(season, week = 0) {
     }
 
     // Then we have data and need to update instead of insert.
-    var cweek = 0;
-    if(espn_current_stats) {
-      cweek = espn_current_stats.week.number;
-    }
+    
 
-    if(week > 0){
-      cweek = week;
-    }
-
-    var l_games_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/games/${season}/${cweek}`);
+    var l_games_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/games/${season}/${week}`);
     var l_games_json = await l_games_resp.json();
     var l_games = l_games_json.games;
 
-    var l_players_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/players/${season}/${cweek}`);
+    var l_players_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/players/${season}/${week}`);
     var l_players_json = await l_players_resp.json();      
     var l_players = l_players_json.qbs;
     
-    var yahoo_current_pstats_r = await fetch(`https://graphite-secure.sports.yahoo.com/v1/query/shangrila/weeklyStatsFootballPassing?season=${season}&league=nfl&sortStatId=PASSING_INTERCEPTIONS&week=${cweek}&count=200`);
+    var yahoo_current_pstats_r = await fetch(`https://graphite-secure.sports.yahoo.com/v1/query/shangrila/weeklyStatsFootballPassing?season=${season}&league=nfl&sortStatId=PASSING_INTERCEPTIONS&week=${week}&count=200`);
     var yahoo_current_pstats = await yahoo_current_pstats_r.json();
     var yahoo_parsed_pstats = await parseYahooPassers(yahoo_current_pstats, season, week, l_games);
     
@@ -674,11 +689,11 @@ async function updateCurrentWeek(season, week = 0) {
       var updatedPlayer = await updated_resp.json();        
     }  
 
-    if(moment().day() > 1 && !locked) {
+    if(moment().day() > 1 && moment().day() < 5 && !locked) {
       // 
-      await setJakePositions();
-      await calculateHistoricalJakes();
-      await calcUlts();
+      //await setJakePositions();
+      //await calculateHistoricalJakes();
+      //await calcUlts();
       // await weekUpdater();
     }
   
@@ -824,6 +839,25 @@ router.get('/get/pff/player_history/:id', async (req,res) => {
   }
 });
 
+router.post('/get/pff/player_history_name/', async (req,res) => {
+  try {    
+    var playerData = req.body;
+    var name_string = '%' + playerData.name +  '%';
+    var historyquery = `SELECT h.id, h.pff_id, h.jake_position_1, h.jake_position_2, h.jake_position_3, h.jake_position_4,
+                          h.ult_jake_position_1, h.ult_jake_position_2, h.ult_jake_position_3, h.ult_jake_position_4, 
+                          h.record_jake, h.record_ultimate, 
+                          (SELECT COUNT(s.id) as cnt FROM nfl.pff_qb_stats s WHERE s.player_id = h.pff_id) as gameCount
+                        FROM nfl.pff_players p 
+                          JOIN nfl.pff_jakes_history h ON h.pff_id = p.pff_id
+                        WHERE p.full_name LIKE ?`;
+    var history_data = await queryDB(historyquery, [name_string]);
+    res.json({done: true, success: true, history: history_data[0] });
+  
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
 router.get('/get/pff/player_details/', async (req, res) => {
   try {
     
@@ -895,8 +929,8 @@ router.post('/get/player/name/', async (req, res) => {
     if(playerData.season && playerData.week) {
       var playerq = ` SELECT p.*, g.game_date
                       FROM nfl.pff_players p 
-                        JOIN nfl.pff_qb_stats q ON q.player_id = p.pff_id and p.season = q.season and p.week = q.week  
-                        JOIN nfl.pff_games g ON (q.team_id = g.away_team_id OR q.team_id = g.home_team_id) and p.season = g.season and p.week = g.week                        
+                        JOIN nfl.pff_qb_stats q ON q.player_id = p.pff_id
+                        JOIN nfl.pff_games g ON (q.team_id = g.away_team_id OR q.team_id = g.home_team_id)                   
                       WHERE p.full_name LIKE ? AND q.season = ? and q.week = ?`;
       var player = await queryDB(playerq, [name_string, playerData.season, playerData.week]);
     } else {
@@ -918,17 +952,17 @@ router.get('/get/jakes/:season/:week', async (req, res) => {
     let weekQuery = '';
     let week = parseInt(req.params.week);
     let season = parseInt(req.params.season);
-    let orderByAdd = 'p.jake_score DESC';
+    let orderByAdd = 'p.jake_score DESC, p.ultimate_score DESC';
     if(week > 0) {
       weekQuery = `and p.week = ${week}`;
     } else {
-      orderByAdd = 'p.week, p.jake_score DESC';
+      orderByAdd = 'p.week, p.jake_score DESC, p.ultimate_score DESC';
     }
 
     //console.log('reqp', req.params);
 
     var jakesQ = `SELECT  p.id, p.player, p.player_id, p.att, p.comp, p.fumbles, p.ints, p.rush_carries, p.rush_tds,
-                          p.rush_yds, p.tds, p.yds, p.sacks, p.qbr,
+                          p.rush_yds, p.tds, p.yds, p.sacks, p.qbr, p.ypa,
                           ROUND(p.jake_score * 100, 2) as jake_score, p.jake_position,
                           ROUND((p.comp / p.att) * 100, 2) as comp_per,  
                           (p.tds + p.rush_tds) as total_tds,                        
@@ -1058,8 +1092,11 @@ router.post('/update/pff/game/date', async (req, res) => {
 
 router.post('/update/pff/game/score', async (req, res) => {
   try {
+
     var scoreData = req.body;
-    var scoreQuery = `UPDATE nfl.pff_games SET score_away = ${scoreData.score_away}, score_home = ${scoreData.score_home}, stadium_id = ${scoreData.stadium_id}, pff_id =${scoreData.pff_id}
+    var pffQ = '';
+    if(scoreData.stadium_id && scoreData.pff_id) pffQ = `,stadium_id = ${scoreData.stadium_id}, pff_id =${scoreData.pff_id}`;
+    var scoreQuery = `UPDATE nfl.pff_games SET winner_id = ${scoreData.winner_id}, loser_id = ${scoreData.loser_id}, winner = '${scoreData.winner}', score_away = ${scoreData.score_away}, score_home = ${scoreData.score_home} ${pffQ} 
                        WHERE away_team_id = ${scoreData.away_team_id} AND home_team_id = ${scoreData.home_team_id} AND season = ${scoreData.season} AND week = ${scoreData.week}`;
     var scoreOK = await queryDB(scoreQuery, []);
     res.json({done: true, success: scoreOK });

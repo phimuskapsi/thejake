@@ -1,5 +1,7 @@
+import 'zingchart/es6';
 import Vue from 'vue'
 import App from './App.vue'
+import zingchartVue from 'zingchart-vue';
 import vuetify from './plugins/vuetify';
 import VueRouter from 'vue-router';
 
@@ -11,6 +13,7 @@ import HistoricalJakes from './components/HistoricalJakes';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 Vue.config.productionTip = false;
+Vue.component('zingchart', zingchartVue)
 Vue.use(VueRouter);
 
 const routes = [

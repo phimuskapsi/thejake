@@ -1,88 +1,87 @@
 <template>
   <div>    
-    <v-container fluid>      
-      <v-row>                 
-        <v-col v-for="item in jakes" :key="item.player" class="col-md-3 player-col" style="padding-top:0px;">                   
-          <v-row :class="item.primary_color">
-            <v-col class="col-md-12">
-              <h2 class="header-dark">
-                {{item.player}}
-                <v-img v-if="item.icon !== null" class="white--text" max-width="30px" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain></v-img>    
-              </h2>
-            </v-col>
-          </v-row>
-          <v-row class="dark">
-            <v-col class="col-md-6">
-              <v-img v-if="item.image !== null" class="white--text align-end" height="140px" :src="item.image" contain></v-img>     
-              <v-img v-if="item.image === null" class="white--text align-end" height="140px" src="@/assets/noplayerimage.png" contain></v-img>
-            </v-col>
-            <v-col class="col-md-6">
-              <v-img v-if="item.jakeImage !== null" class="white--text align-end" height="140px" :src="item.jakeImage" contain></v-img>     
-            </v-col>
-          </v-row>
-
-          <v-row class="darker">
-            <v-col class="col-md-6 darker">
-              <table>
-                <tr>
-                  <td>
-                    Jake Score:
-                  </td>
-                  <td class="td-pad-left td-data-right">
-                    {{ item.jake_score }}
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    INT:
-                  </td>
-                  <td class="td-pad-left td-data-right">
-                    {{ item.ints }}
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    FUM LOST:
-                  </td>
-                  <td class="td-pad-left td-data-right">
-                    {{ item.fumbles }}
-                  </td>
-                </tr>
-              </table>                  
-            </v-col>
-            <v-col class="col-md-6 darker">
-              <table>
-                <tr>
-                  <td>
-                    Pass TD:
-                  </td>
-                  <td class="td-pad-left td-data-right">
-                    {{ item.total_tds }}
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    Comp %:
-                  </td>
-                  <td class="td-pad-left td-data-right">
-                    {{ item.comp_per }} ({{item.comp}} / {{item.att}})
-                  </td>
-                </tr>                    
-                <tr>
-                  <td>
-                    TruJake:
-                  </td>
-                  <td class="td-pad-left td-data-right">
-                    {{ item.ultimate_score }}
-                  </td>
-                </tr>
-              </table> 
-            </v-col>
-          </v-row>              
-        </v-col>
+    <v-container fluid>     
+      <v-row>        
+        <v-col cols="3" v-for="item in jakes" :key="item.player">
+          <v-card class="mx-auto">
+            <v-app-bar dark :class="item.primary_color">
+              <v-toolbar-title>{{ item.player }}</v-toolbar-title>
+              <v-img v-if="item.icon !== null" class="white--text" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain position="center right"></v-img>  
+            </v-app-bar>
+            <v-container fluid>
+              <v-row dense>
+                <v-col class="hidden-sm-and-down col-md-12 col-lg-6 col-xl-6">
+                  <v-card flat>
+                    <v-img v-if="item.image !== null" :alt="item.player" :src="item.image" height="200" contain></v-img>
+                    <v-img v-if="item.image === null" :alt="item.player" src="@/assets/noplayerimage.png" height="200" contain></v-img>
+                  </v-card> 
+                </v-col>
+                <v-col class="hidden-md-and-down col-lg-6 col-xl-6">
+                  <v-card flat> 
+                    <v-img v-if="item.jakeImage !== null" class="white--text" :src="item.jakeImage" height="200" contain></v-img>
+                  </v-card>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
+                  <v-card height="200" min-height="200">
+                    <div class="d-flex flex-no-wrap justify-space-between">
+                      <v-card-text>
+                        <v-list dense>
+                          <v-list-item>
+                            <v-list-item-content><strong>TruJake:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.ultimate_score }}</v-list-item-content>
+                          </v-list-item>
+                          <v-list-item>
+                            <v-list-item-content><strong>Jake Score:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.jake_score }}</v-list-item-content>
+                          </v-list-item>
+                          <v-list-item>
+                            <v-list-item-content><strong>INT:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.ints }}</v-list-item-content>
+                          </v-list-item>
+                          <v-list-item>
+                            <v-list-item-content><strong>FUM LOST:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.fumbles }}</v-list-item-content>
+                          </v-list-item>                          
+                        </v-list>
+                      </v-card-text>
+                    </div>
+                  </v-card>
+                </v-col>
+                <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
+                  <v-card height="200" min-height="200">
+                    <div class="d-flex flex-no-wrap justify-space-between">
+                      <v-card-text>
+                        <v-list dense>
+                          <v-list-item>
+                            <v-list-item-content><strong>Comp %:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.comp_per }}</v-list-item-content>
+                          </v-list-item>
+                          <v-list-item>
+                            <v-list-item-content><strong>YPA:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.ypa }}</v-list-item-content>
+                          </v-list-item>
+                          <v-list-item>
+                            <v-list-item-content><strong>QBR:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.qbr }}</v-list-item-content>
+                          </v-list-item>
+                          <v-list-item>
+                            <v-list-item-content><strong>Sacks:</strong></v-list-item-content>
+                            <v-list-item-content>{{ item.sacks }}</v-list-item-content>
+                          </v-list-item>                          
+                        </v-list>
+                      </v-card-text>
+                    </div>
+                  </v-card>                 
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card>
+        </v-col>    
       </v-row>
-      <v-row>
-        <v-col>
+      <v-row>        
+        <v-col cols="4">
           <h5>Season:</h5>
           <v-select
             :items="seasons"
@@ -93,7 +92,7 @@
             outlined
           ></v-select>
         </v-col>
-        <v-col>
+        <v-col cols="4">
           <h5>Week:</h5>
           <v-select
             :items="weeks"
@@ -105,7 +104,6 @@
           ></v-select>
         </v-col>
       </v-row>
-      
       <v-row>
         <v-col>                
           <v-data-table
@@ -115,7 +113,7 @@
             class="elevation-1"
           ></v-data-table>              
         </v-col>
-      </v-row>       
+      </v-row>   
     </v-container>
   </div>
 </template>
@@ -168,7 +166,7 @@
     }, 
     mounted () {
       this.setupData().then(() => {        
-        this.refreshWeek().then(() => {
+        this.refreshWeek(this.currentSeason, this.currentWeek).then(() => {
           this.getJakes();
           this.startUpdater();
           this.getHistory(false);
@@ -245,6 +243,8 @@
               rush_yds: 0,
               tds: 0,
               yds: 0,
+              ypa: 0.00,
+              qbr: 0.00,
               jake_score: 0.00,
               score_away: 0,
               score_home: 0,
@@ -363,19 +363,23 @@
   }
 
   .gold {
-    background-color: gold;
+    background-color: gold !important;
+    color: #000 !important;
   }
 
   .silver {
-    background-color: silver;  
+    background-color: silver !important;
+    color: #000 !important;
   }
 
   .bronze {
-    background-color: chocolate;
+    background-color: chocolate !important;
+    color: #000 !important;
   }
 
   .darkgreen {
-    background-color: forestgreen;
+    background-color: forestgreen !important;
+    color: #000 !important;
   }
 
   .king-score {
@@ -386,5 +390,13 @@
 
   .headline {
     width: 100%;    
+  }
+
+  .v-card__text {
+    padding: 4px !important;
+  }
+
+  .v-card__title {
+    background: transparent !important;
   }
 </style>

@@ -25,20 +25,130 @@ class NFLAPI {
       //this.addDatesForGames().then((result) => {
       //  console.log('Result: ', result);
       //});
-    this.setJakePositions().then((res) => {
-      console.log('Result: ', res);    
-      this.calculateHistoricalJakes().then((result) => {
-        console.log('Result: ', result);
-        this.calcUlts().then((result2) => {
-          console.log('Result: ', result2);
-        });      
+    //this.fixGames().then((fres) => {
+      //console.log('Result: ', fres);    
+      this.setJakePositions().then((res) => {
+        console.log('Result: ', res);    
+        this.calculateHistoricalJakes().then((result) => {
+          console.log('Result: ', result);
+          this.calcUlts().then((result2) => {
+            console.log('Result: ', result2);
+          });      
+        });
       });
-    });
+    //});
+    
     // eslint-disable-next-line
     //console.log('Fixing Games...');
-    
+  }
 
+  async fixGames() {
+    try {
+      for(var s=2008;s<=2020;s++) {       
+        console.log(`Season ${s} is starting....`); 
+        for(var w=1;w<=17;w++) {
+          if(s===2020 && w > 3) continue;
+          console.log(`Season ${s} - Week ${w} is starting....`);          
+
+          var l_players_resp = await fetch(`http://lvh.me:3000/api/v1/get/pff/players/${s}/${w}`);
+          var l_players_json = await l_players_resp.json();      
+          var l_players = l_players_json.qbs;
     
+          var yahoo_current_pstats_r = await fetch(`https://graphite-secure.sports.yahoo.com/v1/query/shangrila/weeklyStatsFootballPassing?season=${s}&league=nfl&sortStatId=PASSING_INTERCEPTIONS&week=${w}&count=200`);
+          var yahoo_current_pstats = await yahoo_current_pstats_r.json();
+          var yahoo_players = yahoo_current_pstats.data.leagues[0].leagueWeeks[0].leaders;
+
+          for(var pfp=0;pfp<yahoo_players.length;pfp++) {
+            var yahoo_player_pass = yahoo_players[pfp].player;
+            var search_name = yahoo_player_pass.displayName.split(' ')[0] + ' ' + yahoo_player_pass.displayName.split(' ')[1];
+            var player_name_resp = await fetch(`http://lvh.me:3000/api/v1/get/player/name/`, {
+              method: 'post',              
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ name: search_name  })
+            });
+
+            var player_name_json = await player_name_resp.json();
+            if(!player_name_json || !player_name_json.player) continue;
+            var player_id = player_name_json.player.pff_id;           
+            var yahoo_player_stats_pre = yahoo_players[pfp].stats
+            var player_stats = {};
+            yahoo_player_stats_pre.forEach((stat) => {
+              player_stats[stat.statId] = stat.value;
+            });
+
+            var lpindex = l_players.findIndex((player) => {
+              return player_name_json.player.pff_id === player.player_id
+            });
+
+            var local_player = false;
+            if(lpindex > -1) {
+              local_player = l_players[lpindex];              
+            } else {
+              continue;
+            }
+
+            var teamId = 0;
+            var teamIdR = await fetch(`http://lvh.me:3000/api/v1/get/pff/team/${local_player.team}/${s}`);
+            var teamIdJ = await teamIdR.json();
+
+            if(!teamIdJ.team[0]) {
+              debugger;
+              console.log('teamidj', teamIdJ);
+              console.log('lp', local_player);
+            }
+            teamId = teamIdJ.team[0].franchise_id;              
+
+            var statsPlayer = {
+              id: local_player.id,
+              ints: (player_stats.PASSING_INTERCEPTIONS ? parseInt(player_stats.PASSING_INTERCEPTIONS) : 0),
+              fumbles: (player_stats.FUMBLES_LOST ? parseInt(player_stats.FUMBLES_LOST) : 0),
+              att: (player_stats.PASSING_ATTEMPTS ? parseInt(player_stats.PASSING_ATTEMPTS) : 0),
+              comp: (player_stats.PASSING_COMPLETIONS ? parseInt(player_stats.PASSING_COMPLETIONS) : 0),
+              player: player_name_json.player.full_name,
+              player_id: local_player.player_id,
+              rush_carries: 0,
+              rush_tds: 0,
+              rush_yds: 0,
+              tds: (player_stats.PASSING_TOUCHDOWNS ? parseInt(player_stats.PASSING_TOUCHDOWNS) : 0),
+              sacks: (player_stats.SACKS_TAKEN ? parseInt(player_stats.SACKS_TAKEN) : 0),
+              team: local_player.team,
+              team_id: teamId,
+              season: s,
+              week: w,
+              qbr: (player_stats.QB_RATING ? parseFloat(player_stats.QB_RATING) : 0),
+              ypa: (player_stats.PASSING_YARDS_PER_ATTEMPT ? parseFloat(player_stats.PASSING_YARDS_PER_ATTEMPT) : 0),
+              comp_per: (player_stats.COMPLETION_PERCENTAGE ? parseFloat(player_stats.COMPLETION_PERCENTAGE) : 0),
+              yds: (player_stats.PASSING_YARDS ? parseInt(player_stats.PASSING_YARDS) : 0),
+              jake_score: (parseInt(player_stats.PASSING_INTERCEPTIONS) + parseInt(player_stats.FUMBLES_LOST)) * 1/6,
+              ultimate_score: 0.00
+            };
+      
+            var updated_resp = await fetch(`http://lvh.me:3000/api/v1/update/pff/week/`, {
+              method: 'post',              
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(statsPlayer)
+            });
+      
+            var updatedPlayer = await updated_resp.json();      
+            
+          }
+
+          console.log(`Season ${s} - Week ${w} is complete.`);
+        }
+        console.log(`Season ${s} is complete.`);
+      }
+
+      return 'Completed update.';
+    } catch (err) {
+      console.log('error:', err);
+      return false;
+    }
   }
 
   async setJakePositions() {
@@ -75,7 +185,7 @@ class NFLAPI {
               jake_position: pos
             };
 
-            var update_pff_idr = await fetch(`http://lvh.me:3000/api/v1/update/pff/player/`, {
+            var update_pff_idr = await fetch(`http://lvh.me:3000/api/v1/update/pff/jake_pos/`, {
               method: 'post',              
               headers: {
                 'Accept': 'application/json',
@@ -1031,7 +1141,7 @@ class NFLAPI {
   }
   
 
-  async fixGames() {
+  async fixGamesOld() {
     // Due to an oversight...I have to add in a bunch of game stats.    
     let gamesReq = await fetch('http://lvh.me:3000/api/v1/get/games/all');
     let gjson = await gamesReq.json();
