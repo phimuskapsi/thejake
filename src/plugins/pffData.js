@@ -19,6 +19,22 @@ export default class NFLData {
     await self.getCurrentWeek();
   }
 
+  async getCurrentWeek() {
+    try {
+      let req = await fetch('http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
+      let json = await req.json();
+
+      this.week = json.week.number;
+      this.season = json.season.year;
+
+      return true;
+    } catch (err) {
+      //eslint-disable-next-line
+      console.log('error:', err);
+      return err;
+    }
+  }
+
   async getJakesByWeek (season = 0, week = 0) {    
     var players = [];
 
@@ -59,21 +75,26 @@ export default class NFLData {
     }
   }
 
-  async getCurrentWeek() {
+  async getJakesHistory () {    
+    var players = [];
+
+    let getSeason = season > 0 ? season : this.season;
+    let getWeek = week > 0 ? week : this.week;
     try {
-      let req = await fetch('http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
-      let json = await req.json();
+      let jakeReq = await fetch(`http://lvh.me:3000/api/v1/get/jakes/${getSeason}/${getWeek}`);
+      players = await jakeReq.json();
 
-      this.week = json.week.number;
-      this.season = json.season.year;
+      if (players.jakes.length > 0) { 
+        return players.jakes;
+      }
 
-      return true;
+      throw 'no players found.';
     } catch (err) {
       //eslint-disable-next-line
       console.log('error:', err);
       return err;
     }
-  }
+  } 
 
   async updateCurrentWeek(season = 0, week = 0) {
     try {

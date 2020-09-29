@@ -27,7 +27,7 @@
 </template>
 
 <script>
-  import NFLData from '../plugins/nflData.js';
+  import NFLData from '../plugins/pffData.js';
 
   export default {
     
