@@ -323,6 +323,49 @@ async function calcUlts() {
   }
 };
 
+async function checkAndAddPlayer(season = 0, week = 0, search_name = '') {
+  try {
+    var pff_players_resp = await fetch(`https://www.pff.com/api/fantasy/stats/passing?&season=${season}&weeks=${week}`);
+    var pff_players = await pff_players_resp.json();
+    var player_id = 0;  
+    var pffindex = pff_players.findIndex((player) => {
+      return player.player === search_name
+    });
+
+    // PFF finally updated their shit, so let's set it now.
+    if(pffindex > 0) {
+      player_id = pff_players[pffindex].player_id;
+    } else {
+      return false;
+    }  
+    
+    var player = await queryDB(`SELECT * FROM nfl.pff_players p WHERE p.pff_id = ${player_id}`, []);
+    if(!player || player.length === 0) {
+      var playerInfoResp = await fetch(`https://premium.pff.com/api/v1/players?league=nfl&id=${player_id}`);
+      var playerInfoJSON = await playerInfoResp.json();
+      var playerInfo = playerInfoJSON.players[0];
+
+      var tplayer = {
+        pff_id: playerInfo.id,
+        first_name: playerInfo.first_name,
+        last_name: playerInfo.last_name,
+        full_name: playerInfo.first_name + ' ' + playerInfo.last_name,
+        birthday: playerInfo.dob,
+        hometown: ''
+      }; 
+
+      var insertPFFData = getKeysAndValues(tplayer);
+      let insertPFFQuery = `INSERT INTO nfl.pff_players
+                              (${insertPFFData.keysSQL}) 
+                            VALUES (${insertPFFData.valsSQL});`;
+      var inserted = await queryDB(insertPFFQuery, insertPFFData.params);    
+      return true;                          
+    }
+  } catch(err) {
+    return false;
+  }
+}
+
 function getKeysAndValuesForUpdate(obj){
   //console.log(obj);
   //var keys = Object.keys(obj).join(',');
@@ -471,26 +514,17 @@ async function parseYahooPassers(yahooData, season, week) {
     
     if(!player_name_json || !player_name_json.player || !player_name_json.player.pff_id) {
       // Can't find the player in the players db. 
-      var pff_players_resp = await fetch(`https://www.pff.com/api/fantasy/stats/passing?&season=${season}&weeks=${week}`);
-      var pff_players = await pff_players_resp.json();
-      
-      var pffindex = pff_players.findIndex((player) => {
-        return player.player === search_name
-      });
-
-      // PFF finally updated their shit, so let's set it now.
-      if(pffindex > 0) {
-        player_id = pff_players[pffindex].player_id;
-      } else {
-        console.log(`cannot update player: ${search_name}, no pff info available yet.`);
-        continue;
-      }      
+      var player_exists = checkAndAddPlayer(season, week, search_name);
+      if (!player_exists) {
+        console.log(`Tried to update and add: ${search_name}, and failed. PFF data may not exist.`);
+      }
     } else {
       player_id = player_name_json.player.pff_id;
     }
 
     // We only want to add a parsed player to be updated/added if the player actually exists in our tables...
     if(player_id > 0) {
+      
       var parsedPlayer = {
         id: 0,
         ints: player_stats.PASSING_INTERCEPTIONS,
@@ -676,6 +710,8 @@ async function updateCurrentWeek(season, week = 0) {
       } else {
         url = `http://lvh.me:3000/api/v1/add/pff/week`;
       }
+
+
 
       var updated_resp = await fetch(url, {
         method: 'post',              
@@ -950,6 +986,7 @@ router.post('/get/player/name/', async (req, res) => {
 router.get('/get/jakes/:season/:week', async (req, res) => {
   try {
     let weekQuery = '';
+    let seasonQuery = '';
     let week = parseInt(req.params.week);
     let season = parseInt(req.params.season);
     let orderByAdd = 'p.jake_score DESC, p.ultimate_score DESC';
@@ -957,6 +994,12 @@ router.get('/get/jakes/:season/:week', async (req, res) => {
       weekQuery = `and p.week = ${week}`;
     } else {
       orderByAdd = 'p.week, p.jake_score DESC, p.ultimate_score DESC';
+    }
+
+    if(season !== 0 && week !== 0) {
+      seasonQuery = `p.season = ${season}`      
+    } else {
+      orderByAdd = 'p.season, p.week, p.jake_score DESC, p.ultimate_score DESC';
     }
 
     //console.log('reqp', req.params);
@@ -973,8 +1016,88 @@ router.get('/get/jakes/:season/:week', async (req, res) => {
                     JOIN nfl.pff_games g ON p.team_id = g.loser_id and p.season = g.season and p.week = g.week
                     JOIN nfl.pff_teams t ON p.team = t.abbreviation and p.season = t.season
                     JOIN nfl.pff_players pl ON pl.pff_id = p.player_id
-                  WHERE p.season = ${season} ${weekQuery} AND p.jake_score > 0
+                  WHERE ${seasonQuery} ${weekQuery} AND p.jake_score > 0
                   ORDER BY ${orderByAdd} `;
+                  //console.log('reqp', jakesQ);
+
+    var jakes = await queryDB(jakesQ, []);
+
+    res.json({done: true, success: true, jakes: jakes });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+router.get('/get/player_stats/:season/:week', async (req, res) => {
+  try {
+    let weekQuery = '';
+    let seasonQuery = '';
+    let week = parseInt(req.params.week);
+    let season = parseInt(req.params.season);
+    let orderByAdd = 'teamName';
+    if(week > 0) {
+      weekQuery = `and p.week = ${week}`;
+    } 
+
+    if(season !== 0 && week !== 0) {
+      seasonQuery = `p.season = ${season}`      
+    } 
+    //console.log('reqp', req.params);
+
+    var playersQ = `SELECT  p.id, p.player, p.player_id, p.att, p.comp, p.fumbles, p.ints, p.rush_carries, p.rush_tds,
+                          p.rush_yds, p.tds, p.yds, p.sacks, p.qbr, p.ypa,
+                          ROUND(p.jake_score * 100, 2) as jake_score, p.jake_position,
+                          ROUND((p.comp / p.att) * 100, 2) as comp_per,  
+                          (p.tds + p.rush_tds) as total_tds,                        
+                          g.score_away, g.score_home, t.abbreviation, CONCAT(t.city, ' ', t.nickname) as teamName, t.primary_color, t.secondary_color, p.season, p.week,
+                          IF(g.score_away > g.score_home, CONCAT('Final: ', g.score_away, '-', g.score_home), CONCAT('Final: ', g.score_home, '-', g.score_away)) as finalScore, p.ultimate_score,
+                          pl.birthday, g.id as game_id, g.game_date
+                  FROM nfl.pff_qb_stats p
+                    JOIN nfl.pff_games g ON (p.team_id = g.loser_id OR p.team_id = g.winner_id) and p.season = g.season and p.week = g.week
+                    JOIN nfl.pff_teams t ON p.team = t.abbreviation and p.season = t.season
+                    JOIN nfl.pff_players pl ON pl.pff_id = p.player_id
+                  WHERE ${seasonQuery} ${weekQuery}
+                  ORDER BY ${orderByAdd} `;
+                  //console.log('reqp', jakesQ);
+
+    var players = await queryDB(playersQ, []);
+
+    res.json({done: true, success: true, players: players });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+
+router.get('/get/jakes/def/', async (req, res) => {
+  try {
+    var jakes_team_query = `SELECT s.season, s.week, s.player, s.player_id, s.team_id, s.team, s.jake_score, s.jake_position, g.winner_id,
+                              (SELECT t1.nickname FROM nfl.pff_teams t1 WHERE t1.franchise_id = g.winner_id and t1.season = g.season) as winner,
+                              (SELECT t1.color_metadata FROM nfl.pff_teams t1 WHERE t1.franchise_id = g.winner_id and t1.season = g.season) as winner_color,
+                              (SELECT t2.nickname FROM nfl.pff_teams t2 WHERE t2.franchise_id = g.loser_id and t2.season = g.season) as loser,
+                              (SELECT t2.color_metadata FROM nfl.pff_teams t2 WHERE t2.franchise_id = g.winner_id and t2.season = g.season) as loser_color
+                            FROM nfl.pff_qb_stats s
+                              JOIN nfl.pff_games g ON s.game_id = g.id and s.team_id = g.loser_id and g.season = s.season and g.week = s.week
+                            WHERE s.season > 2007 AND s.jake_score > 0 and s.jake_position = 1
+                            ORDER BY winner`;
+
+    var jakes_team = await queryDB(jakes_team_query, []);
+    res.json({done: true, success: true, history: jakes_team });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+router.get('/get/jakes_history/', async (req, res) => {
+  try {
+    var jakesQ = `SELECT p.full_name, 
+                    (h.jake_position_1 + h.jake_position_2 + h.jake_position_3) as totalJakes, 
+                    h.jake_position_1, h.jake_position_2, h.jake_position_3, h.jake_position_4, 
+                    h.record_jake, (SELECT count(s.id) FROM nfl.pff_qb_stats s WHERE s.player_id = h.pff_id) as totalGames
+                  FROM nfl.pff_jakes_history h
+                    JOIN nfl.pff_players p ON p.pff_id = h.pff_id
+                  ORDER BY h.jake_position_1 DESC, totalJakes DESC
+                  LIMIT 10`;
 
     var jakes = await queryDB(jakesQ, []);
 
@@ -989,6 +1112,16 @@ router.get('/get/pff/team/:team_abbr/:season', async (req, res) => {
     var teamq = `SELECT t.* FROM nfl.pff_teams t WHERE t.abbreviation = '${req.params.team_abbr}' and t.season = ${req.params.season}`;
     var team = await queryDB(teamq, []);
     res.json({done: true, success: true, team: team });
+  } catch (err) {
+    res.status(500).json(error);
+  }
+});
+
+router.get('/get/pff/teams/:season', async (req, res) => {
+  try {
+    var teamq = `SELECT t.* FROM nfl.pff_teams t WHERE t.season = ${req.params.season}`;
+    var teams = await queryDB(teamq, []);
+    res.json({done: true, success: true, teams: teams });
   } catch (err) {
     res.status(500).json(error);
   }

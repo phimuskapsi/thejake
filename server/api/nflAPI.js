@@ -42,6 +42,39 @@ class NFLAPI {
     //console.log('Fixing Games...');
   }
 
+  async calcDefStats() {
+    try {
+      var teamsResp = await fetch(`http://lvh.me:3000/api/v1/get/jakes/def/`);
+      var teamsRespJSON = await teamsResp.json();
+      var history_teams = teamsRespJSON.history;
+
+      var team_totals = {};
+      var team_season_totals = {};
+      var team_jakes_totals = {};
+      
+      for(var t=0;t<history_teams.length;t++) {
+        var team = history_teams[t];
+        console.log('starting team: ' + team.winner);
+      
+        if(!team_totals[team.winner_id]) team_totals[team.winner_id] = { total: 0, name: team.winner };
+
+        if(!team_jakes_totals[team.player_id]) team_jakes_totals[team.player_id] = {};
+        if(!team_jakes_totals[team.player_id][team.winner_id]) team_jakes_totals[team.player_id][team.winner_id] = { total: 0, team: team.loser, name: team.player, winner: team.winner };
+
+        if(!team_season_totals[team.season]) team_season_totals[team.season] = {};
+        if(!team_season_totals[team.season][team.winner_id]) team_season_totals[team.season][team.winner_id] = { total: 0, name: team.winner };
+
+
+        team_totals[team.winner_id].total++;
+        team_season_totals[team.season][team.winner_id].total++;
+        team_jakes_totals[team.player_id][team.winner_id].total++;
+      }      
+
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  }
+
   async fixGames() {
     try {
       for(var s=2008;s<=2020;s++) {       

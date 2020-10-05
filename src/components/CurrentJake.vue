@@ -105,15 +105,33 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-col>                
-          <v-data-table
-            :headers="headers"
-            :items="selectedHistory"
-            :items-per-page="25"
-            class="elevation-1"
-          ></v-data-table>              
-        </v-col>
-      </v-row>   
+        <v-tabs fixed-tabs background-color="slate gray" dark v-model="statsTab">
+          <v-tab> 
+            Jakes
+          </v-tab>
+          <v-tab> 
+            All Players
+          </v-tab>
+          <v-tabs-items v-model="statsTab">
+            <v-tab-item> 
+              <v-data-table
+                :headers="jakeHistoryHeaders"
+                :items="selectedJakeHistory"
+                :items-per-page="15"
+                class="elevation-1"
+              ></v-data-table> 
+            </v-tab-item>
+            <v-tab-item> 
+              <v-data-table
+                :headers="playerHistoryHeaders"
+                :items="selectedPlayerHistory"
+                :items-per-page="15"
+                class="elevation-1"
+              ></v-data-table> 
+            </v-tab-item>
+          </v-tabs-items>
+        </v-tabs>
+      </v-row>          
     </v-container>
   </div>
 </template>
@@ -134,9 +152,10 @@
         jakes: [],
         showHistoryTable: false,
         showJakeRankings: false,
-        history: [],
+        jakesHistory: [],
+        playersHistory: [],
         NFLData: new NFLData(),
-        headers: [
+        jakeHistoryHeaders: [
           {
             text: 'Player',
             value: 'player',
@@ -148,15 +167,35 @@
           { text: 'TruJake', value: 'ultimate_score' },
           { text: 'Score', value: 'finalScore' }
         ],
+        playerHistoryHeaders: [
+          {
+            text: 'Player',
+            value: 'player',
+          },
+          { text: 'Team', value: 'abbreviation' }, 
+          { text: 'Att', value: 'att' },
+          { text: 'Comp', value: 'comp' },
+          { text: 'Comp %', value: 'comp_per' },
+          { text: 'QBR', value: 'qbr' },
+          { text: 'YPA', value: 'ypa' },        
+          { text: 'Int', value: 'ints' },
+          { text: 'Fumbles', value: 'fumbles' },
+          { text: 'Sacks', value: 'sacks' },
+          { text: 'Jake Score', value: 'jake_score' },
+          { text: 'TruJake', value: 'ultimate_score' },
+          { text: 'Score', value: 'finalScore' }
+        ],
         seasons: [],
         weeks: [],
         seasonTypes: [
           { text: 'Regular Season', value: 'REG' },
           { text: 'Post-season', value: 'POST' }],
-        selectedHistory: [],
+        selectedJakeHistory: [],
+        selectedPlayerHistory: [],
         selectedSeasonType: 'REG',
         selectedSeason: 0,
         selectedWeek: 1,
+        statsTab: null,
         time_loop_length: 15,
         time_restrictions: ['23:59', '23:59', false, false, '23:59', false, false]
       }
@@ -165,25 +204,29 @@
       
     }, 
     mounted () {
-      this.setupData().then(() => {        
+      this.updateProgress(true);
+      this.setupData().then(() => {   
+        this.updateProgress(25);     
         this.refreshWeek(this.currentSeason, this.currentWeek).then(() => {
+          this.updateProgress(50);
           this.getJakes();
+          this.updateProgress(75);
           this.startUpdater();
           this.getHistory(false);
+          this.updateProgress(100);
         });
       });
     },
     methods: {
       assignImages () {
         var no_name_used = false;
-        for(var j=0;j<this.jakes.length;j++) {
-          let names = this.jakes[j].player.split(' ');
-          let img = '';
+        for(var j=0;j<this.jakes.length;j++) {      
+          let img = '';    
           try {
+            let names = this.jakes[j].player.split(' ');            
             img = require('../assets/players/' + names[0].substring(0,1).toLowerCase() + '.' + names[1].toLowerCase() + '.jpg');
           } catch (ex) {
-            if(!no_name_used) img = require('../assets/players/no-image.jpg');
-            if(no_name_used) img = '../assets/players/no-image.jpg';
+            img = null;
           }
           let color = '';
           let ji = '';
@@ -225,15 +268,16 @@
         var jakeData = await this.NFLData.getJakesByWeek(this.currentSeason, this.currentWeek);        
         //eslint-disable-next-line
         //console.log('weekData:', weekData);
-
-        this.players = Object.assign([], jakeData);
-        this.history[this.currentSeason][this.currentWeek].players = this.players;
+        if(jakeData.success) {
+          this.players = Object.assign([], jakeData.players);
+          this.jakesHistory[this.currentSeason][this.currentWeek].players = this.players;
+        }
         
         if(this.players.length < 4) {
           var missing = 4 - this.players.length;
           for(var p=missing;p>0;p--) {
             this.players.push({
-              player: 'No player',
+              player: `No player ${p+1}`,
               att: 0,
               comp: 0,
               fumbles: 0,
@@ -250,6 +294,9 @@
               score_home: 0,
               abbreviation: '',
               teamName: '',
+              image: '',
+              icon: '',
+              jakeImage: '',
               primary_color: 'silver',
               secondary_color: 'black',
               weight: 0.00
@@ -260,30 +307,48 @@
         // Figure out the true jake order based off of the ultimate formula.
         // this.calcUltimate();
         this.jakes = this.players.slice(0,4);
-        this.assignImages();
         if (this.jakes) {
+          this.assignImages();          
           this.showJakeRankings = true;
         }
       },
       async getHistory (refresh = true) {       
         if (this.selectedSeason > 0) {
           if(this.selectedWeek > 0) {           
-            if (this.history[this.selectedSeason][this.selectedWeek].players.length > 0) {
-              this.selectedHistory = this.history[this.selectedSeason][this.selectedWeek].players;
+            if (this.jakesHistory[this.selectedSeason][this.selectedWeek].players.length > 0) {
+              this.selectedJakeHistory = this.jakesHistory[this.selectedSeason][this.selectedWeek].players;
               this.showHistoryTable = true;
-            } else {
-              let weekData = await this.NFLData.getJakesByWeek(this.selectedSeason, this.selectedWeek);
-              this.history[this.selectedSeason][this.selectedWeek].players = weekData;
-              this.selectedHistory = weekData;
-              this.showHistoryTable = true;
+            } else { 
+              let weekJakeData = null;
+              let weekPlayerData = null;
+
+              Promise.all([this.NFLData.getJakesByWeek(this.selectedSeason, this.selectedWeek), this.NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek)]).then((values) => {
+                weekJakeData = values[0].players;
+                weekPlayerData = values[1].players;
+
+                if(Array.isArray(weekJakeData) && weekJakeData.length > 0) {
+                  this.jakesHistory[this.selectedSeason][this.selectedWeek].players = weekJakeData;
+                  this.selectedJakeHistory = weekJakeData;
+                }
+
+                if(Array.isArray(weekPlayerData) && weekPlayerData.length > 0) {
+                  this.playersHistory[this.selectedSeason][this.selectedWeek].players = weekPlayerData;
+                  this.selectedPlayerHistory = weekPlayerData;
+                }              
+                                
+                this.showHistoryTable = true;
+              })                            
             }
 
             this.currentWeek = this.selectedWeek;
             this.currentSeason = this.selectedSeason;
 
             if(refresh) {
-              await this.refreshWeek(this.currentSeason, this.currentWeek);
-              this.getJakes();
+              this.updateProgress(true);
+              this.refreshWeek(this.currentSeason, this.currentWeek).then(() => {
+                this.getJakes();
+                this.updateProgress(false);
+              });              
             }
           } 
 
@@ -299,7 +364,7 @@
           let refresh = this.NFLData.updateCurrentWeek(season, week);
         }
       },
-      async setupData () {   
+      async setupData () {           
         await this.NFLData.init();
         this.currentWeek = this.NFLData.week;
         this.currentSeason = this.NFLData.season;
@@ -308,20 +373,25 @@
         let maxWeek = this.currentWeek;
 
         for (let y=this.currentSeason;y>2007;y--) {
-          this.history[y] = [];
+          this.jakesHistory[y] = [];
           this.seasons.push(y);
 
           if (y < this.currentSeason) maxWeek = 21;          
           for (let w=1;w<=maxWeek;w++) {
             if (typeof this.weeks[w] === 'undefined') this.weeks.push(w);            
-            this.history[y][w] = {                
+            this.jakesHistory[y][w] = {                
               players: []
             };              
           }         
         }
+
+        this.playersHistory = [...this.jakesHistory];
       },
       async startUpdater() {
         
+      },
+      updateProgress(val) {
+        this.$emit('updateProgress', val);
       }
     }
   }
