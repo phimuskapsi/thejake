@@ -418,11 +418,13 @@ async function parseESPNGames(espnData, season, week) {
     var away_key = home_key === 0 ? 1 : 0;
     var away_team = game.competitors[away_key].team; // id, location, name, abbreviation, displayName, shortDisplayName, color, alternateColor, isActive
     var home_team = game.competitors[home_key].team;
-    var winner = game.competitors[home_key].winner ? 'home' : 'away';
-    var away_score = game.competitors[away_key].score;
-    var home_score = game.competitors[home_key].score;
+    
+    var away_score = parseInt(game.competitors[away_key].score);
+    var home_score = parseInt(game.competitors[home_key].score);
 
+    var winner = away_score > home_score ? 'away' : 'home';
     if(away_score === home_score) winner = 'tie';  
+    
     try{     
       if(away_team.abbreviation === 'WSH') away_team.abbreviation = 'WAS';
       if(home_team.abbreviation === 'WSH') home_team.abbreviation = 'WAS';
