@@ -1,8 +1,8 @@
 # thejake
 
-## Project setup
+## ExpressJS API - Start first
 ```
-npm install
+node server/app 
 ```
 
 ### Compiles and hot-reloads for development
@@ -10,20 +10,4 @@ npm install
 npm run serve
 ```
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Run your tests
-```
-npm run test
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+Requires database that I won't reveal here (though you could probably figure it out). If you wish to use only live data, look at getCurrentWeek() function, and process that data.
