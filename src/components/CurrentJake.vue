@@ -1,84 +1,88 @@
 <template>
   <div>    
-    <v-container fluid>     
-      <v-row>        
-        <v-col cols="3" v-for="item in jakes" :key="item.player">
-          <v-card class="mx-auto">
-            <v-app-bar dark :class="item.primary_color">
-              <v-toolbar-title>{{ item.player }}</v-toolbar-title>
-              <v-img v-if="item.icon !== null" class="white--text" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain position="center right"></v-img>  
-            </v-app-bar>
-            <v-container fluid>
-              <v-row dense>
-                <v-col class="hidden-sm-and-down col-md-12 col-lg-6 col-xl-6">
-                  <v-card flat>
-                    <v-img v-if="item.image !== null" :alt="item.player" :src="item.image" height="200" contain></v-img>
-                    <v-img v-if="item.image === null" :alt="item.player" src="@/assets/noplayerimage.png" height="200" contain></v-img>
-                  </v-card> 
-                </v-col>
-                <v-col class="hidden-md-and-down col-lg-6 col-xl-6">
-                  <v-card flat> 
-                    <v-img v-if="item.jakeImage !== null" class="white--text" :src="item.jakeImage" height="200" contain></v-img>
-                  </v-card>
-                </v-col>
-              </v-row>
-              <v-row dense>
-                <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
-                  <v-card height="200" min-height="200">
-                    <div class="d-flex flex-no-wrap justify-space-between">
-                      <v-card-text>
-                        <v-list dense>
-                          <v-list-item>
-                            <v-list-item-content><strong>TruJake:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.ultimate_score }}</v-list-item-content>
-                          </v-list-item>
-                          <v-list-item>
-                            <v-list-item-content><strong>Jake Score:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.jake_score }}</v-list-item-content>
-                          </v-list-item>
-                          <v-list-item>
-                            <v-list-item-content><strong>INT:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.ints }}</v-list-item-content>
-                          </v-list-item>
-                          <v-list-item>
-                            <v-list-item-content><strong>FUM LOST:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.fumbles }}</v-list-item-content>
-                          </v-list-item>                          
-                        </v-list>
-                      </v-card-text>
-                    </div>
-                  </v-card>
-                </v-col>
-                <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
-                  <v-card height="200" min-height="200">
-                    <div class="d-flex flex-no-wrap justify-space-between">
-                      <v-card-text>
-                        <v-list dense>
-                          <v-list-item>
-                            <v-list-item-content><strong>Comp %:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.comp_per }}</v-list-item-content>
-                          </v-list-item>
-                          <v-list-item>
-                            <v-list-item-content><strong>YPA:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.ypa }}</v-list-item-content>
-                          </v-list-item>
-                          <v-list-item>
-                            <v-list-item-content><strong>QBR:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.qbr }}</v-list-item-content>
-                          </v-list-item>
-                          <v-list-item>
-                            <v-list-item-content><strong>Sacks:</strong></v-list-item-content>
-                            <v-list-item-content>{{ item.sacks }}</v-list-item-content>
-                          </v-list-item>                          
-                        </v-list>
-                      </v-card-text>
-                    </div>
-                  </v-card>                 
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card>
-        </v-col>    
+    <v-container fluid v-if="!inProgress">       
+      <v-row>
+        <v-col cols="12">
+          <v-row>        
+            <v-col cols="3" v-for="item in jakes" :key="item.player">
+              <v-card class="mx-auto">
+                <v-app-bar dark :class="item.primary_color">
+                  <v-toolbar-title>{{ item.player }}</v-toolbar-title> 
+                  <v-img v-if="item.icon !== null" class="white--text" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain position="center right"></v-img>  
+                </v-app-bar>
+                <v-container fluid>
+                  <v-row dense>
+                    <v-col class="hidden-sm-and-down col-md-12 col-lg-6 col-xl-6">
+                      <v-card flat>
+                        <v-img v-if="item.image !== null" :alt="item.player" :src="item.image" height="125" contain></v-img>
+                        <v-img v-if="item.image === null" :alt="item.player" src="@/assets/noplayerimage.png" height="125" contain></v-img>
+                      </v-card> 
+                    </v-col>
+                    <v-col class="hidden-md-and-down col-lg-6 col-xl-6">
+                      <v-card flat> 
+                        <v-img v-if="item.jakeImage !== null" class="white--text" :src="item.jakeImage" height="125" contain></v-img>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                  <v-row dense>
+                    <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
+                      <v-card height="200" min-height="200">
+                        <div class="d-flex flex-no-wrap justify-space-between">
+                          <v-card-text>
+                            <v-list dense>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
+                              </v-list-item>                          
+                            </v-list>
+                          </v-card-text>
+                        </div>
+                      </v-card>
+                    </v-col>
+                    <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
+                      <v-card height="200" min-height="200">
+                        <div class="d-flex flex-no-wrap justify-space-between">
+                          <v-card-text>
+                            <v-list dense>
+                              <v-list-item>
+                                <v-list-item-content><strong>Comp %:</strong></v-list-item-content>
+                                <v-list-item-content>{{ item.comp_per }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item>
+                                <v-list-item-content><strong>YPA:</strong></v-list-item-content>
+                                <v-list-item-content>{{ item.ypa }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item>
+                                <v-list-item-content><strong>QBR:</strong></v-list-item-content>
+                                <v-list-item-content>{{ item.qbr }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item>
+                                <v-list-item-content><strong>Sacks:</strong></v-list-item-content>
+                                <v-list-item-content>{{ item.sacks }}</v-list-item-content>
+                              </v-list-item>                          
+                            </v-list>
+                          </v-card-text>
+                        </div>
+                      </v-card>                 
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-card>
+            </v-col>    
+          </v-row>
+        </v-col>       
       </v-row>
       <v-row>        
         <v-col cols="4">
@@ -127,7 +131,8 @@
                 :items="selectedPlayerHistory"
                 :items-per-page="15"
                 class="elevation-1"
-              ></v-data-table> 
+              >
+              </v-data-table>
             </v-tab-item>
           </v-tabs-items>
         </v-tabs>
@@ -138,7 +143,7 @@
 
 <script>
   // import HistoricalJakes from './HistoricalJakes';
-  import NFLData from '../plugins/pffData.js';
+  import NFLData from '../plugins/pffFunctions.js';
   import * as moment from 'moment'
   
   export default {
@@ -146,10 +151,12 @@
     data () {
       return {
         currentWeek: 0,
-        currentSeason: 0,        
+        currentSeason: 0,    
+        inProgress: false,    
         lastUpdated: 0,
         players: [],
         jakes: [],
+        expandedBreakdown: [],
         showHistoryTable: false,
         showJakeRankings: false,
         jakesHistory: [],
@@ -165,7 +172,7 @@
           { text: 'Fumbles', value: 'fumbles' },
           { text: 'Jake Score', value: 'jake_score' },
           { text: 'TruJake', value: 'ultimate_score' },
-          { text: 'Score', value: 'finalScore' }
+          { text: 'Score', value: 'finalScore' },
         ],
         playerHistoryHeaders: [
           {
@@ -183,7 +190,7 @@
           { text: 'Sacks', value: 'sacks' },
           { text: 'Jake Score', value: 'jake_score' },
           { text: 'TruJake', value: 'ultimate_score' },
-          { text: 'Score', value: 'finalScore' }
+          { text: 'Score', value: 'finalScore' },
         ],
         seasons: [],
         weeks: [],
@@ -206,14 +213,16 @@
     mounted () {
       this.updateProgress(true);
       this.setupData().then(() => {   
-        this.updateProgress(25);     
+        this.updateProgress(25, 'Getting ESPN/Yahoo Data...');     
         this.refreshWeek(this.currentSeason, this.currentWeek).then(() => {
-          this.updateProgress(50);
-          this.getJakes();
-          this.updateProgress(75);
-          this.startUpdater();
-          this.getHistory(false);
-          this.updateProgress(100);
+          this.updateProgress(50, 'Getting Jake Data for Week...');
+          this.getJakes().then(() => {
+            this.updateProgress(75, 'Getting Player Data for Week...');
+            this.startUpdater();
+            this.getHistory(false).then(() => {
+              this.updateProgress(100);
+            });
+          });          
         });
       });
     },
@@ -299,9 +308,18 @@
               jakeImage: '',
               primary_color: 'silver',
               secondary_color: 'black',
-              weight: 0.00
+              weight: 0.00,
+              ultimate_score: 0.00,
+              id: `temp-${p}`,
+              index: p
             });
           }
+
+          this.players.sort((a, b) => {
+            if(a.index < b.index) return -1;
+            if(a.index > b.index) return 1;
+            return 0;
+          });
         } 
 
         // Figure out the true jake order based off of the ultimate formula.
@@ -317,6 +335,12 @@
           if(this.selectedWeek > 0) {           
             if (this.jakesHistory[this.selectedSeason][this.selectedWeek].players.length > 0) {
               this.selectedJakeHistory = this.jakesHistory[this.selectedSeason][this.selectedWeek].players;
+              var allPlayers = await this.NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek);
+              if(Array.isArray(allPlayers.players) && allPlayers.players.length > 0) {
+                this.playersHistory[this.selectedSeason][this.selectedWeek].players = allPlayers.players;
+                this.selectedPlayerHistory = allPlayers.players;
+              }   
+
               this.showHistoryTable = true;
             } else { 
               let weekJakeData = null;
@@ -361,7 +385,7 @@
       async refreshWeek(season = 0, week = 0) {
         this.lastUpdated = moment().millisecond();        
         if(season >= 2020) {
-          let refresh = this.NFLData.updateCurrentWeek(season, week);
+          await this.NFLData.updateCurrentWeek(season, week);
         }
       },
       async setupData () {           
@@ -390,8 +414,13 @@
       async startUpdater() {
         
       },
-      updateProgress(val) {
-        this.$emit('updateProgress', val);
+      updateProgress(val, text) {
+        if(val === 100) {
+          this.inProgress = false;
+        } else {
+          this.inProgress = typeof val === 'number' ? true : val;
+        }
+        this.$emit('updateProgress', { val: val, text: text});
       }
     }
   }

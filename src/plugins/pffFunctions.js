@@ -89,7 +89,7 @@ export default class NFLData {
       let jakeReq = await fetch(`http://lvh.me:3000/api/v1/get/jakes/${getSeason}/${getWeek}`);
       players = await jakeReq.json();
 
-      if (players.jakes.length > 0) { 
+      if (players.jakes.length > 0) {         
         return { success: true, players: players.jakes };
       }
 
@@ -149,7 +149,7 @@ export default class NFLData {
       players = await playerReq.json();
 
       if (players.players.length > 0) { 
-        return { success: true, players: players.players };
+        return { success: true, players: players.players, history: history_data };
       }
 
       throw {success: false, msg: 'no players found'};

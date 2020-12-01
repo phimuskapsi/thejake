@@ -29,7 +29,7 @@
 </template>
 
 <script>
-  import NFLData from '../plugins/pffData.js';
+  import NFLData from '../plugins/pffFunctions.js';
 
   export default {
     
@@ -131,7 +131,7 @@
             styles: []
           },
           "legend": {},
-          "scale-x": {
+          "scale-x": { 
             'items-overlap': true,
             'max-items':32,
             "labels": [],

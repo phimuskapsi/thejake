@@ -863,6 +863,7 @@ router.get('/get/pff/games/:season/:week', async (req, res) => {
 
 router.get('/get/pff/player_history/:id', async (req,res) => {
   try {    
+    console.log(req.params.id);
     var historyquery = `SELECT h.id, h.pff_id, h.jake_position_1, h.jake_position_2, h.jake_position_3, h.jake_position_4,
                           h.ult_jake_position_1, h.ult_jake_position_2, h.ult_jake_position_3, h.ult_jake_position_4, 
                           h.record_jake, h.record_ultimate, 
@@ -1023,7 +1024,6 @@ router.get('/get/jakes/:season/:week', async (req, res) => {
                   //console.log('reqp', jakesQ);
 
     var jakes = await queryDB(jakesQ, []);
-
     res.json({done: true, success: true, jakes: jakes });
   } catch (err) {
     res.status(500).json(err);
@@ -1044,9 +1044,9 @@ router.get('/get/player_stats/:season/:week', async (req, res) => {
     if(season !== 0 && week !== 0) {
       seasonQuery = `p.season = ${season}`      
     } 
-    //console.log('reqp', req.params);
+    console.log('reqp', req.params);
 
-    var playersQ = `SELECT  p.id, p.player, p.player_id, p.att, p.comp, p.fumbles, p.ints, p.rush_carries, p.rush_tds,
+    var playersQ = `SELECT  p.id, pl.pff_id, p.player, p.player_id, p.att, p.comp, p.fumbles, p.ints, p.rush_carries, p.rush_tds,
                           p.rush_yds, p.tds, p.yds, p.sacks, p.qbr, p.ypa,
                           ROUND(p.jake_score * 100, 2) as jake_score, p.jake_position,
                           ROUND((p.comp / p.att) * 100, 2) as comp_per,  
@@ -1060,9 +1060,21 @@ router.get('/get/player_stats/:season/:week', async (req, res) => {
                     JOIN nfl.pff_players pl ON pl.pff_id = p.player_id
                   WHERE ${seasonQuery} ${weekQuery}
                   ORDER BY ${orderByAdd} `;
-                  //console.log('reqp', jakesQ);
+                 // console.log('reqp', playersQ);
 
     var players = await queryDB(playersQ, []);
+
+    players.forEach(async (player, playerIndex) => {
+      var historyquery = `SELECT h.id, h.pff_id, h.jake_position_1, h.jake_position_2, h.jake_position_3, h.jake_position_4,
+                          h.ult_jake_position_1, h.ult_jake_position_2, h.ult_jake_position_3, h.ult_jake_position_4, 
+                          h.record_jake, h.record_ultimate, 
+                          (SELECT COUNT(s.id) as cnt FROM nfl.pff_qb_stats s WHERE s.player_id = h.pff_id) as gameCount
+                        FROM nfl.pff_jakes_history h 
+                        WHERE h.pff_id = ${player.pff_id}`;
+      var history_data = await queryDB(historyquery, []);
+      player.history = history_data;
+      players[playerIndex] = player;
+    }); 
 
     res.json({done: true, success: true, players: players });
   } catch (err) {
