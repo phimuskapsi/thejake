@@ -333,7 +333,7 @@
       async getHistory (refresh = true) {       
         if (this.selectedSeason > 0) {
           if(this.selectedWeek > 0) {           
-            if (this.jakesHistory[this.selectedSeason][this.selectedWeek].players.length > 0) {
+            if (this.jakesHistory[this.selectedSeason][this.selectedWeek] && this.jakesHistory[this.selectedSeason][this.selectedWeek].players) {
               this.selectedJakeHistory = this.jakesHistory[this.selectedSeason][this.selectedWeek].players;
               var allPlayers = await this.NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek);
               if(Array.isArray(allPlayers.players) && allPlayers.players.length > 0) {
@@ -347,20 +347,24 @@
               let weekPlayerData = null;
 
               Promise.all([this.NFLData.getJakesByWeek(this.selectedSeason, this.selectedWeek), this.NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek)]).then((values) => {
-                weekJakeData = values[0].players;
-                weekPlayerData = values[1].players;
+                if(values[0].success && values[1].success) {
+                  weekJakeData = values[0].players;
+                  weekPlayerData = values[1].players;
 
-                if(Array.isArray(weekJakeData) && weekJakeData.length > 0) {
-                  this.jakesHistory[this.selectedSeason][this.selectedWeek].players = weekJakeData;
-                  this.selectedJakeHistory = weekJakeData;
+                  if(Array.isArray(weekJakeData) && weekJakeData.length > 0) {
+                    this.jakesHistory[this.selectedSeason][this.selectedWeek].players = weekJakeData;
+                    this.selectedJakeHistory = weekJakeData;
+                  }
+
+                  if(Array.isArray(weekPlayerData) && weekPlayerData.length > 0) {
+                    this.playersHistory[this.selectedSeason][this.selectedWeek].players = weekPlayerData;
+                    this.selectedPlayerHistory = weekPlayerData;
+                  }              
+                                  
+                  this.showHistoryTable = true;
+                } else {
+                  
                 }
-
-                if(Array.isArray(weekPlayerData) && weekPlayerData.length > 0) {
-                  this.playersHistory[this.selectedSeason][this.selectedWeek].players = weekPlayerData;
-                  this.selectedPlayerHistory = weekPlayerData;
-                }              
-                                
-                this.showHistoryTable = true;
               })                            
             }
 

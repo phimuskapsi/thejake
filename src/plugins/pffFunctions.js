@@ -147,9 +147,8 @@ export default class NFLData {
     try {
       let playerReq = await fetch(`http://lvh.me:3000/api/v1/get/player_stats/${getSeason}/${getWeek}`);
       players = await playerReq.json();
-
       if (players.players.length > 0) { 
-        return { success: true, players: players.players, history: history_data };
+        return { success: true, players: players.players };
       }
 
       throw {success: false, msg: 'no players found'};
