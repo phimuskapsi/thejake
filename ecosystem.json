@@ -1,0 +1,18 @@
+{
+    "apps" : {
+      "name"        : "vuejs",
+      "script"      : "./src/main.js",
+      "watch"       : true,
+      "instances"  : 4,
+      "exec_mode"  : "cluster",
+      "env": {
+        "COMMON_VARIABLE": "true"
+      },
+      "env_production" : {
+         "NODE_ENV": "production"
+      },
+      "env_develpomemt" : {
+         "NODE_ENV": "development"
+      }
+    }
+  }
