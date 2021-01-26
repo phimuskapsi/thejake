@@ -352,6 +352,8 @@
                   weekPlayerData = values[1].players;
 
                   if(Array.isArray(weekJakeData) && weekJakeData.length > 0) {
+                    if(!this.jakesHistory[this.selectedSeason]) this.jakesHistory[this.selectedSeason] = [];
+                    if(!this.jakesHistory[this.selectedSeason][this.selectedWeek]) this.jakesHistory[this.selectedSeason][this.selectedWeek] = {};
                     this.jakesHistory[this.selectedSeason][this.selectedWeek].players = weekJakeData;
                     this.selectedJakeHistory = weekJakeData;
                   }
