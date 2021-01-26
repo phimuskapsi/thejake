@@ -21,7 +21,7 @@ export default class NFLData {
 
   async calcDefStats() {
     try {
-      var teamsResp = await fetch(`http://lvh.me:3000/api/v1/get/jakes/def/`);
+      var teamsResp = await fetch(`http://xperimental.io:4200/api/v1/get/jakes/def/`);
       var teamsRespJSON = await teamsResp.json();
       var history_teams = teamsRespJSON.history;
 
@@ -86,7 +86,7 @@ export default class NFLData {
     let getSeason = season > 0 ? season : this.season;
     let getWeek = week > 0 ? week : this.week;
     try {
-      let jakeReq = await fetch(`http://lvh.me:3000/api/v1/get/jakes/${getSeason}/${getWeek}`);
+      let jakeReq = await fetch(`http://xperimental.io:4200/api/v1/get/jakes/${getSeason}/${getWeek}`);
       players = await jakeReq.json();
 
       if (players.jakes.length > 0) {         
@@ -105,7 +105,7 @@ export default class NFLData {
     var players = [];    
     let getSeason = season > 0 ? season : this.season;    
     try {
-      let jakeReq = await fetch(`http://lvh.me:3000/api/v1/get/jakes/${getSeason}`);
+      let jakeReq = await fetch(`http://xperimental.io:4200/api/v1/get/jakes/${getSeason}`);
       players = await jakeReq.json();
 
       if (players.length > 0) { 
@@ -124,7 +124,7 @@ export default class NFLData {
     var players = [];
 
     try {
-      let jakeReq = await fetch(`http://lvh.me:3000/api/v1/get/jakes_history/`);
+      let jakeReq = await fetch(`http://xperimental.io:4200/api/v1/get/jakes_history/`);
       players = await jakeReq.json();
 
       if (players.jakes.length > 0) { 
@@ -145,7 +145,7 @@ export default class NFLData {
     let getSeason = season > 0 ? season : this.season;
     let getWeek = week > 0 ? week : this.week;
     try {
-      let playerReq = await fetch(`http://lvh.me:3000/api/v1/get/player_stats/${getSeason}/${getWeek}`);
+      let playerReq = await fetch(`http://xperimental.io:4200/api/v1/get/player_stats/${getSeason}/${getWeek}`);
       players = await playerReq.json();
       if (players.players.length > 0) { 
         return { success: true, players: players.players };
@@ -163,7 +163,7 @@ export default class NFLData {
     var players = [];    
     let getSeason = season > 0 ? season : this.season;    
     try {
-      let playerReq = await fetch(`http://lvh.me:3000/api/v1/get/player_stats/${getSeason}`);
+      let playerReq = await fetch(`http://xperimental.io:4200/api/v1/get/player_stats/${getSeason}`);
       players = await playerReq.json();
 
       if (players.players.length > 0) { 
@@ -186,7 +186,7 @@ export default class NFLData {
       if(season > 0) selected_season = season;
       if(week > 0) selected_week = week;
 
-      var latestWeekResp = await fetch(`http://lvh.me:3000/api/v1/update/currentweek/${selected_season}/${selected_week}`);
+      var latestWeekResp = await fetch(`http://xperimental.io:4200/api/v1/update/currentweek/${selected_season}/${selected_week}`);
       var latestWeek = await latestWeekResp.json();
       return latestWeek;
       

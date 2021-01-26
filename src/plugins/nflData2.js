@@ -83,7 +83,7 @@ export default class NFLData {
   }
 
   async getJakeHistory(y = -1, w = -1, g = -1) {
-    let url = 'http://lvh.me:3000/api/players/jakes/history';
+    let url = 'http://xperimental.io:4200/api/players/jakes/history';
      
     if (y > -1) {
       url += `/${y}`;
