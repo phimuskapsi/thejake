@@ -72,6 +72,24 @@ export default class NFLData {
       this.week = json.week.number;
       this.season = json.season.year;
 
+       // Get the calendar to figure out where we are.
+       var leagueData = json.leagues[0];
+       var calendar = leagueData.calendar;
+       var seasonType = parseInt(leagueData.season.type.type); // 1= Pre, 2= Reg, 3= Post, 4= Off
+       
+       // If we are in the pre-season skip
+       if(seasonType === 1) return {success: true, msg: 'we\'re in the pre-season...stay tuned...'};
+       // If we are in the off-season skip
+       if(seasonType === 4) return {success: true, msg: 'we\'re in the off-season...stay tuned...'};
+       
+       var currentDate = moment();
+       var currentWeek = calendar[seasonType-1].entries.find(entry => moment(entry.startDate) <= currentDate && moment(entry.endDate) >= currentDate).value;
+       
+       // If we are in the post-season, ESPN re-numbers their weeks from 1-5 (WC, Div, Conf, ProBowl, SuperBowl)
+       if (seasonType === 3) currentWeek += 17;
+
+      this.week = currentWeek;
+
       return true;
     } catch (err) {
       //eslint-disable-next-line
