@@ -1,6 +1,112 @@
 <template>
   <div>    
-    <v-container fluid v-if="!inProgress">       
+    <v-container fluid v-if="!inProgress">      
+      <v-row>
+        <v-col cols="12">
+          <v-expansion-panels v-model="infopanels" :disabled="infopanelDisabled">
+           <v-expansion-panel>
+            <v-expansion-panel-header>What is 'The Jake'?</v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <v-row> 
+                <v-col cols="4">
+                  <v-card flat style="height:450px;overflow-y:auto;">
+                    <v-card-text>
+                      <p><strong>What is 'The Jake'?</strong></p>
+                      <p>
+                        In the 2008-09 season heading the playoffs, Jake Delhomme of the Carolina Panthers was on an 8-game win streak. In the Divisional playoffs however,
+                        Jake had the worst day of his career, and it coincided with his 34th birthday on January 10th, 2009. Jake turned the ball over 6 times, with 5 INT's and 1 FL.
+                        <br><br>
+                        Ever since that game football fans on <a href="https://www.fark.com">Fark.com</a> have long had a calculation for other QBs based on this horrible night. Farkers tracked this rather organically and sometimes sporadically as 
+                        various people maintained this in threads. One year our main keeper said that work would interfere and I decided to make a site to track this more or less automatically.
+                      </p>
+                      <h5>Rules:</h5>
+                      <p>
+                        <ul>
+                          <li>6 turnovers is the target, so one turnover = 16.67 points</li>
+                          <li>A 'perfect' Jake, is when it happens to be the player's birthday, on their worst day</li>
+                          <li>Game losers <strong>only</strong>. Winners are exempt from rating</li>
+                        </ul>
+                      </p>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+                <v-col cols="4">
+                  <v-card flat style="height:450px;overflow-y:auto;">
+                    <v-card-text>
+                      <p><strong>What is 'TruJake'?</strong></p>
+                      <p>
+                        This is a measurement of how 'bad' the Jake performance actually was. A 'perfect' TruJake, 
+                        just happens to work out to Delhomme's actual birthday (Jan 10, 1975): <strong>11075 points</strong>. 
+                        I created this metric after dealing with too many ties for weekly winners, we needed a way to refine this to find the true worst QB of the week. 
+                      </p>
+                      <p>
+                        <strong>Scoring:</strong>
+                        <ul>
+                          <li>
+                            <strong>Sacks <i>(S)</i>:</strong> [ 100 max ] 
+                            <br>10 points per sack.
+                          </li>
+                          <li>
+                            <strong>TDs <i>(T)</i>:</strong> [ 100 max ] 
+                            <br>-10 points per TD.
+                          </li>
+                          <li>
+                            <strong>Birthday <i>(B)</i>:</strong> [ 10000 max ] 
+                            <br>10000 points if it is the QB birthday.
+                          </li>
+                          <li>
+                            <strong>Jake Score <i>(JS)</i>:</strong> [ 500 max ] 
+                            <br>0-100 based on performance, times 5.
+                          </li>
+                          <li>
+                            <strong>QBR <i>(QBR)</i>:</strong> [ 300 max ] 
+                            <br>
+                            <span style="background-color:#efefef">(( 1 / QBR ) * 158.3 ) * 1.895</span>
+                          </li>
+                        </ul>
+                      </p>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+                <v-col cols="4">
+                  <v-card flat style="height:450px;overflow-y:auto;">
+                    <v-card-text>
+                      <p>
+                        Historical performance acts like a weight on the QB performance. If, for example, a QB has a long history of many first place Jake finishes, 
+                        it will weigh more on future performance. I track up to four places to get a wider view of performance. 
+                        <br><br>
+                        <strong>Weights:</strong>                    
+                        <ul>
+                          <li>1st Place: 65%</li>
+                          <li>2nd Place: 20%</li>
+                          <li>3rd Place: 10%</li>
+                          <li>4th Place: 5%</li>
+                        </ul>
+                        <strong>Raw Score <i>(R)</i>:</strong>
+                        <br>
+                        <span style="background-color:#efefef">(h1 + h2 + h3 + h4)</span>
+                        <br>
+                        <strong>Weighted Score <i>(W)</i>:</strong>
+                        <br>
+                        <span style="background-color:#efefef">((wh1 * 0.65) + (wh2 * 0.20) + (wh3 * 0.10) + (wh4 * 0.05))</span>
+                        <br>
+                        <strong>Historical Score <i>(HS)</i>:</strong> [ 200 max ]
+                        <br>
+                        <span style="background-color:#efefef">(W * ( 1 + R / [number of games])) * 10</span>
+                        <br>
+                        <strong>TruJake Calculation <i></i>:</strong>
+                        <br>
+                        <span style="background-color:#efefef">( JS + HS + S + QBR + B - T)</span>
+                      </p>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-expansion-panel-content>
+           </v-expansion-panel>
+          </v-expansion-panels>
+        </v-col>
+      </v-row> 
       <v-row>
         <v-col cols="12">
           <v-row>        
@@ -100,6 +206,8 @@
           <h5>Week:</h5>
           <v-select
             :items="weeks"
+            item-text="name"
+            item-value="number"
             v-model="selectedWeek"
             @change="getHistory" 
             label="Weeks:"
@@ -159,6 +267,8 @@
         expandedBreakdown: [],
         showHistoryTable: false,
         showJakeRankings: false,
+        infoPanelDisabled: false,
+        infopanels: [0],
         jakesHistory: [],
         playersHistory: [],
         NFLData: new NFLData(),
@@ -226,6 +336,11 @@
         });
       });
     },
+    computed: {
+      truJakeImage () {
+        return require('../assets/truejake.png');
+      }
+    },
     methods: {
       assignImages () {
         var no_name_used = false;
@@ -261,7 +376,7 @@
 
           this.jakes[j]['image'] = img;
           this.jakes[j]['jakeImage'] = require('../assets/' + ji);
-
+          
           try {
             this.jakes[j]['icon'] = require('../assets/teams/' + this.jakes[j].abbreviation.toUpperCase() + '-icon.png');
           } catch(ex) {
@@ -333,8 +448,9 @@
       async getHistory (refresh = true) {       
         if (this.selectedSeason > 0) {
           if(this.selectedWeek > 0) {           
-            if (this.jakesHistory[this.selectedSeason][this.selectedWeek] && this.jakesHistory[this.selectedSeason][this.selectedWeek].players) {
+            if (this.jakesHistory[this.selectedSeason][this.selectedWeek] && this.jakesHistory[this.selectedSeason][this.selectedWeek].players && this.jakesHistory[this.selectedSeason][this.selectedWeek].players.length > 0) {
               this.selectedJakeHistory = this.jakesHistory[this.selectedSeason][this.selectedWeek].players;
+
               var allPlayers = await this.NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek);
               if(Array.isArray(allPlayers.players) && allPlayers.players.length > 0) {
                 this.playersHistory[this.selectedSeason][this.selectedWeek].players = allPlayers.players;
@@ -364,8 +480,6 @@
                   }              
                                   
                   this.showHistoryTable = true;
-                } else {
-                  
                 }
               })                            
             }
@@ -408,7 +522,17 @@
 
           if (y < this.currentSeason) maxWeek = 21;          
           for (let w=1;w<=maxWeek;w++) {
-            if (typeof this.weeks[w] === 'undefined') this.weeks.push(w);            
+            var weekName = `Week ${w}`;
+            if(w > 17) {
+              switch(w) {
+                case 18: weekName = 'Wild Card'; break;
+                case 19: weekName = 'Division Round'; break;
+                case 20: weekName = 'Conference Championship'; break;
+                case 21: weekName = 'Pro Bowl'; break;
+                case 22: weekName = 'Super Bowl'; break;    
+              }
+            }
+            if (typeof this.weeks[w] === 'undefined') this.weeks.push({ name: weekName, number: w});            
             this.jakesHistory[y][w] = {                
               players: []
             };              
