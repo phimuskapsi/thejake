@@ -10,5 +10,4 @@ node server/app
 ```
 npm run serve
 ```
-
-Requires database that I won't reveal here (though you could probably figure it out). If you wish to use only live data, look at getCurrentWeek() function, and process that data.
+Should just work out of the box, this is now wired up to a live backend.
