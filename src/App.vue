@@ -5,7 +5,7 @@
         <span>The</span>
         <span class="font-weight-light">Jake</span>
       </v-toolbar-title>   
-  
+
       <v-progress-linear
         :active="showProgress"
         :color="progressColor"

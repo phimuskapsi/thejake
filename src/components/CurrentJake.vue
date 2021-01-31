@@ -1,250 +1,295 @@
 <template>
   <div>    
-    <v-container fluid v-if="!inProgress">      
-      <v-row>
-        <v-col cols="12">
-          <v-expansion-panels v-model="infopanels" :disabled="infopanelDisabled">
-           <v-expansion-panel>
-            <v-expansion-panel-header>What is 'The Jake'?</v-expansion-panel-header>
-            <v-expansion-panel-content>
-              <v-row> 
-                <v-col cols="4">
-                  <v-card flat style="height:450px;overflow-y:auto;">
-                    <v-card-text>
-                      <p><strong>What is 'The Jake'?</strong></p>
-                      <p>
-                        In the 2008-09 season heading the playoffs, Jake Delhomme of the Carolina Panthers was on an 8-game win streak. In the Divisional playoffs however,
-                        Jake had the worst day of his career, and it coincided with his 34th birthday on January 10th, 2009. Jake turned the ball over 6 times, with 5 INT's and 1 FL.
-                        <br><br>
-                        Ever since that game football fans on <a href="https://www.fark.com">Fark.com</a> have long had a calculation for other QBs based on this horrible night. Farkers tracked this rather organically and sometimes sporadically as 
-                        various people maintained this in threads. One year our main keeper said that work would interfere and I decided to make a site to track this more or less automatically.
-                      </p>
-                      <h5>Rules:</h5>
-                      <p>
-                        <ul>
-                          <li>6 turnovers is the target, so one turnover = 16.67 points</li>
-                          <li>A 'perfect' Jake, is when it happens to be the player's birthday, on their worst day</li>
-                          <li>Game losers <strong>only</strong>. Winners are exempt from rating</li>
-                        </ul>
-                      </p>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="4">
-                  <v-card flat style="height:450px;overflow-y:auto;">
-                    <v-card-text>
-                      <p><strong>What is 'TruJake'?</strong></p>
-                      <p>
-                        This is a measurement of how 'bad' the Jake performance actually was. A 'perfect' TruJake, 
-                        just happens to work out to Delhomme's actual birthday (Jan 10, 1975): <strong>11075 points</strong>. 
-                        I created this metric after dealing with too many ties for weekly winners, we needed a way to refine this to find the true worst QB of the week. 
-                      </p>
-                      <p>
-                        <strong>Scoring:</strong>
-                        <ul>
-                          <li>
-                            <strong>Sacks <i>(S)</i>:</strong> [ 100 max ] 
-                            <br>10 points per sack.
-                          </li>
-                          <li>
-                            <strong>TDs <i>(T)</i>:</strong> [ 100 max ] 
-                            <br>-10 points per TD.
-                          </li>
-                          <li>
-                            <strong>Birthday <i>(B)</i>:</strong> [ 10000 max ] 
-                            <br>10000 points if it is the QB birthday.
-                          </li>
-                          <li>
-                            <strong>Jake Score <i>(JS)</i>:</strong> [ 500 max ] 
-                            <br>0-100 based on performance, times 5.
-                          </li>
-                          <li>
-                            <strong>QBR <i>(QBR)</i>:</strong> [ 300 max ] 
+    <v-container fluid v-if="!inProgress">          
+      <v-row no-gutters>
+        <v-col md="3" lg="2" xl="2" class="d-none d-md-block">
+          <v-navigation-drawer>
+            <template v-slot:prepend>
+              <v-list-item two-line>
+                <v-list-item-content>
+                  <v-list-item-title>Navigation</v-list-item-title>
+                  <v-list-item-subtitle></v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </template>
+
+            <v-divider></v-divider>
+
+            <v-list dense>
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>Current Week</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>Historical Stats</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+
+            <v-divider></v-divider>
+
+
+          </v-navigation-drawer>
+        </v-col>
+        <v-col cols="12" class="d-md-none">
+
+        </v-col>
+        <v-col xl="10" lg="10" md="9" sm="12" style="padding: 0em 2em !important;">   
+          <v-row>
+            <v-col cols="12">
+              <v-expansion-panels v-model="infopanels" :disabled="infopanelDisabled">
+              <v-expansion-panel>
+                <v-expansion-panel-header><strong>INFO & CALCULATIONS</strong></v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <v-row> 
+                    <v-col cols="4">
+                      <v-card flat style="height:450px;overflow-y:auto;">
+                        <v-card-text>
+                          <p><strong>What is 'The Jake'?</strong></p>
+                          <p>
+                            In the 2008-09 season heading the playoffs, Jake Delhomme of the Carolina Panthers was on an 8-game win streak. In the Divisional playoffs however,
+                            Jake had the worst day of his career, and it coincided with his 34th birthday on January 10th, 2009. Jake turned the ball over 6 times, with 5 INT's and 1 FL.
+                            <br><br>
+                            Ever since that game football fans on <a href="https://www.fark.com">Fark.com</a> have long had a calculation for other QBs based on this horrible night. Farkers tracked this rather organically and sometimes sporadically as 
+                            various people maintained this in threads. One year our main keeper said that work would interfere and I decided to make a site to track this more or less automatically.
+                          </p>
+                          <h5>Rules:</h5>
+                          <p>
+                            <ul>
+                              <li>6 turnovers is the target, so one turnover = 16.67 points</li>
+                              <li>A 'perfect' Jake, is when it happens to be the player's birthday, on their worst day</li>
+                              <li>Game losers <strong>only</strong>. Winners are exempt from rating</li>
+                            </ul>
+                          </p>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                    <v-col cols="4">
+                      <v-card flat style="height:450px;overflow-y:auto;">
+                        <v-card-text>
+                          <p><strong>What is 'TruJake'?</strong></p>
+                          <p>
+                            This is a measurement of how 'bad' the Jake performance actually was. A 'perfect' TruJake, 
+                            just happens to work out to Delhomme's actual birthday (Jan 10, 1975): <strong>11075 points</strong>. 
+                            I created this metric after dealing with too many ties for weekly winners, we needed a way to refine this to find the true worst QB of the week. 
+                          </p>
+                          <p>
+                            <strong>Scoring:</strong>
+                            <ul>
+                              <li>
+                                <strong>Sacks <i>(S)</i>:</strong> [ 100 max ] 
+                                <br>10 points per sack.
+                              </li>
+                              <li>
+                                <strong>TDs <i>(T)</i>:</strong> [ 100 max ] 
+                                <br>-10 points per TD.
+                              </li>
+                              <li>
+                                <strong>Birthday <i>(B)</i>:</strong> [ 10000 max ] 
+                                <br>10000 points if it is the QB birthday.
+                              </li>
+                              <li>
+                                <strong>Jake Score <i>(JS)</i>:</strong> [ 500 max ] 
+                                <br>0-100 based on performance, times 5.
+                              </li>
+                              <li>
+                                <strong>QBR <i>(QBR)</i>:</strong> [ 300 max ] 
+                                <br>
+                                <span style="background-color:#efefef">(( 1 / QBR ) * 158.3 ) * 1.895</span>
+                              </li>
+                            </ul>
+                          </p>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                    <v-col cols="4">
+                      <v-card flat style="height:450px;overflow-y:auto;">
+                        <v-card-text>
+                          <p>
+                            Historical performance acts like a weight on the QB performance. If, for example, a QB has a long history of many first place Jake finishes, 
+                            it will weigh more on future performance. I track up to four places to get a wider view of performance. 
+                            <br><br>
+                            <strong>Weights:</strong>                    
+                            <ul>
+                              <li>1st Place: 65%</li>
+                              <li>2nd Place: 20%</li>
+                              <li>3rd Place: 10%</li>
+                              <li>4th Place: 5%</li>
+                            </ul>
+                            <strong>Raw Score <i>(R)</i>:</strong>
                             <br>
-                            <span style="background-color:#efefef">(( 1 / QBR ) * 158.3 ) * 1.895</span>
-                          </li>
-                        </ul>
-                      </p>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="4">
-                  <v-card flat style="height:450px;overflow-y:auto;">
-                    <v-card-text>
-                      <p>
-                        Historical performance acts like a weight on the QB performance. If, for example, a QB has a long history of many first place Jake finishes, 
-                        it will weigh more on future performance. I track up to four places to get a wider view of performance. 
-                        <br><br>
-                        <strong>Weights:</strong>                    
-                        <ul>
-                          <li>1st Place: 65%</li>
-                          <li>2nd Place: 20%</li>
-                          <li>3rd Place: 10%</li>
-                          <li>4th Place: 5%</li>
-                        </ul>
-                        <strong>Raw Score <i>(R)</i>:</strong>
-                        <br>
-                        <span style="background-color:#efefef">(h1 + h2 + h3 + h4)</span>
-                        <br>
-                        <strong>Weighted Score <i>(W)</i>:</strong>
-                        <br>
-                        <span style="background-color:#efefef">((wh1 * 0.65) + (wh2 * 0.20) + (wh3 * 0.10) + (wh4 * 0.05))</span>
-                        <br>
-                        <strong>Historical Score <i>(HS)</i>:</strong> [ 200 max ]
-                        <br>
-                        <span style="background-color:#efefef">(W * ( 1 + R / [number of games])) * 10</span>
-                        <br>
-                        <strong>TruJake Calculation <i></i>:</strong>
-                        <br>
-                        <span style="background-color:#efefef">( JS + HS + S + QBR + B - T)</span>
-                      </p>
+                            <span style="background-color:#efefef">(h1 + h2 + h3 + h4)</span>
+                            <br>
+                            <strong>Weighted Score <i>(W)</i>:</strong>
+                            <br>
+                            <span style="background-color:#efefef">((wh1 * 0.65) + (wh2 * 0.20) + (wh3 * 0.10) + (wh4 * 0.05))</span>
+                            <br>
+                            <strong>Historical Score <i>(HS)</i>:</strong> [ 200 max ]
+                            <br>
+                            <span style="background-color:#efefef">(W * ( 1 + R / [number of games])) * 10</span>
+                            <br>
+                            <strong>TruJake Calculation <i></i>:</strong>
+                            <br>
+                            <span style="background-color:#efefef">( JS + HS + S + QBR + B - T)</span>
+                          </p>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+              </v-expansion-panels>
+            </v-col>
+          </v-row> 
+          <v-row>
+            <v-col cols="12">
+              <v-row v-if="showNoPlayers">
+                <v-col md="12">
+                  <v-card height="250">
+                    <v-card-text class="no-player-text">
+                      No stats available for the week.
+                      <br><br>
+                      Select another week from below.
                     </v-card-text>
                   </v-card>
                 </v-col>
               </v-row>
-            </v-expansion-panel-content>
-           </v-expansion-panel>
-          </v-expansion-panels>
-        </v-col>
-      </v-row> 
-      <v-row>
-        <v-col cols="12">
-          <v-row>        
-            <v-col cols="3" v-for="item in jakes" :key="item.player">
-              <v-card class="mx-auto">
-                <v-app-bar dark :class="item.primary_color">
-                  <v-toolbar-title>{{ item.player }}</v-toolbar-title> 
-                  <v-img v-if="item.icon !== null" class="white--text" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain position="center right"></v-img>  
-                </v-app-bar>
-                <v-container fluid>
-                  <v-row dense>
-                    <v-col class="hidden-sm-and-down col-md-12 col-lg-6 col-xl-6">
-                      <v-card flat>
-                        <v-img v-if="item.image !== null" :alt="item.player" :src="item.image" height="125" contain></v-img>
-                        <v-img v-if="item.image === null" :alt="item.player" src="@/assets/noplayerimage.png" height="125" contain></v-img>
-                      </v-card> 
-                    </v-col>
-                    <v-col class="hidden-md-and-down col-lg-6 col-xl-6">
-                      <v-card flat> 
-                        <v-img v-if="item.jakeImage !== null" class="white--text" :src="item.jakeImage" height="125" contain></v-img>
-                      </v-card>
-                    </v-col>
-                  </v-row>
-                  <v-row dense>
-                    <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
-                      <v-card height="200" min-height="200">
-                        <div class="d-flex flex-no-wrap justify-space-between">
-                          <v-card-text>
-                            <v-list dense>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
-                              </v-list-item>                          
-                            </v-list>
-                          </v-card-text>
-                        </div>
-                      </v-card>
-                    </v-col>
-                    <v-col class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
-                      <v-card height="200" min-height="200">
-                        <div class="d-flex flex-no-wrap justify-space-between">
-                          <v-card-text>
-                            <v-list dense>
-                              <v-list-item>
-                                <v-list-item-content><strong>Comp %:</strong></v-list-item-content>
-                                <v-list-item-content>{{ item.comp_per }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item>
-                                <v-list-item-content><strong>YPA:</strong></v-list-item-content>
-                                <v-list-item-content>{{ item.ypa }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item>
-                                <v-list-item-content><strong>QBR:</strong></v-list-item-content>
-                                <v-list-item-content>{{ item.qbr }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item>
-                                <v-list-item-content><strong>Sacks:</strong></v-list-item-content>
-                                <v-list-item-content>{{ item.sacks }}</v-list-item-content>
-                              </v-list-item>                          
-                            </v-list>
-                          </v-card-text>
-                        </div>
-                      </v-card>                 
-                    </v-col>
-                  </v-row>
-                </v-container>
-              </v-card>
-            </v-col>    
+              <v-row v-if="!showNoPlayers">                        
+                <v-col lg="3" md="3" sm="12" v-for="(item,index) in jakes" :key="item.player">  
+              
+                  <v-card class="mx-auto" outlined tile min-height="475px">   
+                    <!-- Header Image For jakes -->                 
+                    <v-img height="250px" :src="item.jakeImage" :gradient="placeColors[index]" position="middle">                        
+                      <v-avatar class="" :rounded="false" size="164" style="padding-top:12px;padding-left:12px;">
+                        <v-img v-if="item.image !== null" :alt="item.player" :src="item.image"></v-img>
+                        <v-img v-if="item.image === null" :alt="item.player" src="@/assets/noplayerimage.png"></v-img>                        
+                      </v-avatar>
+                  
+                      <v-list-item color="rgba(0, 0, 0, .4)" dark>
+                        <v-list-item-content>
+                          <v-list-item-title class="title">
+                            {{ item.player }}
+                          </v-list-item-title>
+                          <v-list-item-subtitle style="line-height:35px;height:35px;">
+                            <div style="width:30px;float:left;">
+                              <v-img v-if="item.icon !== null" class="white--text" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain position="center right"></v-img>                                
+                            </div>
+                            <div style="padding-left: 8px;float:left;">
+                              <strong style="color:#fff">{{ item.teamName }}</strong>                                  
+                            </div>                                
+                          </v-list-item-subtitle>
+                        </v-list-item-content>
+                      </v-list-item>                           
+                    </v-img>
+                    <v-card-text>
+                      <v-list dense>
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
+                        </v-list-item>
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
+                        </v-list-item>
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
+                        </v-list-item>
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
+                        </v-list-item>
+                        <v-list-item style="min-height:20px;">
+
+                        </v-list-item>                           
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>Comp %:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.comp_per }}</v-list-item-content>
+                        </v-list-item>
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>YPA:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.ypa }}</v-list-item-content>
+                        </v-list-item>
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>QBR:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.qbr }}</v-list-item-content>
+                        </v-list-item>
+                        <v-list-item style="min-height:20px;">
+                          <v-list-item-content style="font-size:12px;padding:0;"><strong>Sacks:</strong></v-list-item-content>
+                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.sacks }}</v-list-item-content>
+                        </v-list-item> 
+                      </v-list>
+                    </v-card-text>             
+                  </v-card>
+                    
+                
+                  
+                </v-col>    
+              </v-row>
+            </v-col>       
           </v-row>
-        </v-col>       
-      </v-row>
-      <v-row>        
-        <v-col cols="4">
-          <h5>Season:</h5>
-          <v-select
-            :items="seasons"
-            v-model="selectedSeason"
-            @change="getHistory" 
-            label="Season:"
-            solo
-            outlined
-          ></v-select>
+          <v-row>        
+            <v-col cols="4">
+              <h5>Season:</h5>
+              <v-select
+                :items="seasons"
+                v-model="selectedSeason"
+                @change="getHistory" 
+                label="Season:"
+                solo
+                outlined
+              ></v-select>
+            </v-col>
+            <v-col cols="4">
+              <h5>Week:</h5>
+              <v-select
+                :items="weeks"
+                item-text="name"
+                item-value="number"
+                v-model="selectedWeek"
+                @change="getHistory" 
+                label="Weeks:"
+                solo
+                outlined
+              ></v-select>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12">
+              <v-tabs fixed-tabs background-color="slate gray" dark v-model="statsTab">
+                <v-tab> 
+                  Jakes
+                </v-tab>
+                <v-tab> 
+                  All Players
+                </v-tab>
+                <v-tabs-items v-model="statsTab">
+                  <v-tab-item> 
+                    <v-data-table
+                      :headers="jakeHistoryHeaders"
+                      :items="selectedJakeHistory"
+                      :items-per-page="15"
+                      class="elevation-1"
+                    ></v-data-table> 
+                  </v-tab-item>
+                  <v-tab-item> 
+                    <v-data-table
+                      :headers="playerHistoryHeaders"
+                      :items="selectedPlayerHistory"
+                      :items-per-page="15"
+                      class="elevation-1"
+                    >
+                    </v-data-table>
+                  </v-tab-item>
+                </v-tabs-items>
+              </v-tabs>
+            </v-col>
+          </v-row>          
         </v-col>
-        <v-col cols="4">
-          <h5>Week:</h5>
-          <v-select
-            :items="weeks"
-            item-text="name"
-            item-value="number"
-            v-model="selectedWeek"
-            @change="getHistory" 
-            label="Weeks:"
-            solo
-            outlined
-          ></v-select>
-        </v-col>
+        
       </v-row>
-      <v-row>
-        <v-tabs fixed-tabs background-color="slate gray" dark v-model="statsTab">
-          <v-tab> 
-            Jakes
-          </v-tab>
-          <v-tab> 
-            All Players
-          </v-tab>
-          <v-tabs-items v-model="statsTab">
-            <v-tab-item> 
-              <v-data-table
-                :headers="jakeHistoryHeaders"
-                :items="selectedJakeHistory"
-                :items-per-page="15"
-                class="elevation-1"
-              ></v-data-table> 
-            </v-tab-item>
-            <v-tab-item> 
-              <v-data-table
-                :headers="playerHistoryHeaders"
-                :items="selectedPlayerHistory"
-                :items-per-page="15"
-                class="elevation-1"
-              >
-              </v-data-table>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-tabs>
-      </v-row>          
     </v-container>
   </div>
 </template>
@@ -265,6 +310,7 @@
         players: [],
         jakes: [],
         expandedBreakdown: [],
+        showNoPlayers: false,
         showHistoryTable: false,
         showJakeRankings: false,
         infoPanelDisabled: false,
@@ -302,6 +348,12 @@
           { text: 'TruJake', value: 'ultimate_score' },
           { text: 'Score', value: 'finalScore' },
         ],
+        placeColors: [
+          "to top right, rgba(190,151,0,.8), rgba(201, 176, 55, .95)",
+          "to top right, rgba(180, 180, 180,.8), rgba(215, 215, 215,.95)",
+          "to top right, rgba(106, 56, 5,.8), rgba(173, 138, 86,.95)",
+          "to top right, rgba(33, 69, 141,.8), rgba(88, 113, 226,.95)"
+        ],        
         seasons: [],
         weeks: [],
         seasonTypes: [
@@ -312,7 +364,7 @@
         selectedSeasonType: 'REG',
         selectedSeason: 0,
         selectedWeek: 1,
-        statsTab: null,
+        statsTab: null,        
         time_loop_length: 15,
         time_restrictions: ['23:59', '23:59', false, false, '23:59', false, false]
       }
@@ -387,21 +439,23 @@
         }
       },
       async getJakes () {
-        //var self = this;      
-        
+        //var self = this;            
         var jakeData = await this.NFLData.getJakesByWeek(this.currentSeason, this.currentWeek);        
         //eslint-disable-next-line
         //console.log('weekData:', weekData);
         if(jakeData.success) {
-          this.players = Object.assign([], jakeData.players);
-          this.jakesHistory[this.currentSeason][this.currentWeek].players = this.players;
-        }
+          this.showNoPlayers = false;
+          this.players = Object.assign([], jakeData.players);          
+        } else {
+          this.players = new Array(0);
+          this.showNoPlayers = true;
+        }       
         
         if(this.players.length < 4) {
           var missing = 4 - this.players.length;
           for(var p=missing;p>0;p--) {
             this.players.push({
-              player: `No player ${p+1}`,
+              player: `No player ${p}`,
               att: 0,
               comp: 0,
               fumbles: 0,
@@ -426,7 +480,8 @@
               weight: 0.00,
               ultimate_score: 0.00,
               id: `temp-${p}`,
-              index: p
+              index: p,
+              fake: true
             });
           }
 
@@ -439,6 +494,7 @@
 
         // Figure out the true jake order based off of the ultimate formula.
         // this.calcUltimate();
+         this.jakesHistory[this.currentSeason][this.currentWeek].players = this.players;
         this.jakes = this.players.slice(0,4);
         if (this.jakes) {
           this.assignImages();          
@@ -617,12 +673,20 @@
     right: 63px;
   }
 
+  .no-player-text {
+    text-align: center;
+    font-size: 2em !important;
+    font-weight: 400;
+    font-family: 'Courier New', Courier, monospace;
+    padding-top: 100px !important;
+  }
+
   .headline {
     width: 100%;    
   }
 
   .v-card__text {
-    padding: 4px !important;
+    padding: 4px;
   }
 
   .v-card__title {
