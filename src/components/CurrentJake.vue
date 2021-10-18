@@ -11,10 +11,8 @@
                   <v-list-item-subtitle></v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
-            </template>
-
-            <v-divider></v-divider>
-
+           
+                        <v-divider></v-divider>
             <v-list dense>
               <v-list-item>
                 <v-list-item-content>
@@ -27,10 +25,7 @@
                 </v-list-item-content>
               </v-list-item>
             </v-list>
-
             <v-divider></v-divider>
-
-
           </v-navigation-drawer>
         </v-col>
         <v-col cols="12" class="d-md-none">
@@ -39,7 +34,7 @@
         <v-col xl="10" lg="10" md="9" sm="12" style="padding: 0em 2em !important;">   
           <v-row>
             <v-col cols="12">
-              <v-expansion-panels v-model="infopanels" :disabled="infopanelDisabled">
+              <v-expansion-panels v-model="infopanels">
               <v-expansion-panel>
                 <v-expansion-panel-header><strong>INFO & CALCULATIONS</strong></v-expansion-panel-header>
                 <v-expansion-panel-content>
@@ -156,76 +151,112 @@
                   </v-card>
                 </v-col>
               </v-row>
-              <v-row v-if="!showNoPlayers">                        
-                <v-col lg="3" md="3" sm="12" v-for="(item,index) in jakes" :key="item.player">  
-              
-                  <v-card class="mx-auto" outlined tile min-height="475px">   
-                    <!-- Header Image For jakes -->                 
-                    <v-img height="250px" :src="item.jakeImage" :gradient="placeColors[index]" position="middle">                        
-                      <v-avatar class="" :rounded="false" size="164" style="padding-top:12px;padding-left:12px;">
-                        <v-img v-if="item.image !== null" :alt="item.player" :src="item.image"></v-img>
-                        <v-img v-if="item.image === null" :alt="item.player" src="@/assets/noplayerimage.png"></v-img>                        
-                      </v-avatar>
-                  
-                      <v-list-item color="rgba(0, 0, 0, .4)" dark>
-                        <v-list-item-content>
-                          <v-list-item-title class="title">
-                            {{ item.player }}
-                          </v-list-item-title>
-                          <v-list-item-subtitle style="line-height:35px;height:35px;">
-                            <div style="width:30px;float:left;">
-                              <v-img v-if="item.icon !== null" class="white--text" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain position="center right"></v-img>                                
-                            </div>
-                            <div style="padding-left: 8px;float:left;">
-                              <strong style="color:#fff">{{ item.teamName }}</strong>                                  
-                            </div>                                
-                          </v-list-item-subtitle>
-                        </v-list-item-content>
-                      </v-list-item>                           
-                    </v-img>
-                    <v-card-text>
-                      <v-list dense>
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
-                        </v-list-item>
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
-                        </v-list-item>
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
-                        </v-list-item>
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
-                        </v-list-item>
-                        <v-list-item style="min-height:20px;">
+              <v-row v-if="!showNoPlayers">                      
+                <v-col cols="12">
+                  <v-expansion-panels>
+                    <v-expansion-panel v-for="(item,index) in jakes" :key="item.player">
+                      <v-expansion-panel-header style="padding:0px;">
+                        <div class="col-md-3">
+                          <!-- Header Image For jakes -->                 
+                          <v-img height="250px" :src="item.jakeImage" :gradient="placeColors[index]" position="middle">                        
+                            <v-avatar class="" :rounded="false" size="164" style="padding-top:12px;padding-left:12px;">
+                              <v-img v-if="item.image !== null" :alt="item.player" :src="item.image"></v-img>
+                              <v-img v-if="item.image === null" :alt="item.player" src="@/assets/noplayerimage.png"></v-img>                        
+                            </v-avatar>
+                        
+                            <v-list-item color="rgba(0, 0, 0, .4)" dark>
+                              <v-list-item-content>
+                                <v-list-item-title class="title">
+                                  {{ item.player }}
+                                </v-list-item-title>
+                                <v-list-item-subtitle style="line-height:35px;height:35px;">
+                                  <div style="width:30px;float:left;">
+                                    <v-img v-if="item.icon !== null" class="white--text" height="30px" style="float:right;margin-top:5px;" :src="item.icon" contain position="center right"></v-img>                                
+                                  </div>
+                                  <div style="padding-left: 8px;float:left;">
+                                    <strong style="color:#fff">{{ item.teamName }}</strong>                                  
+                                  </div>                                
+                                </v-list-item-subtitle>
+                              </v-list-item-content>
+                            </v-list-item>                           
+                          </v-img>
+                        </div>
+                        <div class="col-md-2">
+                          <v-card class="mx-auto" outlined tile height="250px">          
+                            <v-card-title>
+                              Jake Stats:
+                            </v-card-title>                 
+                            <v-card-text>
+                              <v-list dense>
+                                <v-list-item style="min-height:20px;">
+                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
+                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
+                                </v-list-item>
+                                <v-list-item style="min-height:20px;">
+                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
+                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
+                                </v-list-item>
+                                <v-list-item style="min-height:20px;">
+                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
+                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
+                                </v-list-item>
+                                <v-list-item style="min-height:20px;">
+                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
+                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
+                                </v-list-item>
+                              </v-list>
+                            </v-card-text>
+                          </v-card>
+                        </div>
 
-                        </v-list-item>                           
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>Comp %:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.comp_per }}</v-list-item-content>
-                        </v-list-item>
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>YPA:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.ypa }}</v-list-item-content>
-                        </v-list-item>
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>QBR:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.qbr }}</v-list-item-content>
-                        </v-list-item>
-                        <v-list-item style="min-height:20px;">
-                          <v-list-item-content style="font-size:12px;padding:0;"><strong>Sacks:</strong></v-list-item-content>
-                          <v-list-item-content style="font-size:12px;padding:0;">{{ item.sacks }}</v-list-item-content>
-                        </v-list-item> 
-                      </v-list>
-                    </v-card-text>             
-                  </v-card>
-                    
-                
-                  
+                      </v-expansion-panel-header>
+                      <v-expansion-panel-content>
+                        <v-card class="mx-auto" outlined tile min-height="475px">                           
+                          <v-card-text>
+                            <v-list dense>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+
+                              </v-list-item>                           
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Comp %:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.comp_per }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>YPA:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ypa }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>QBR:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.qbr }}</v-list-item-content>
+                              </v-list-item>
+                              <v-list-item style="min-height:20px;">
+                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Sacks:</strong></v-list-item-content>
+                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.sacks }}</v-list-item-content>
+                              </v-list-item> 
+                            </v-list>
+                          </v-card-text>             
+                        </v-card>
+                      </v-expansion-panel-content>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+                </v-col>
+                <v-col lg="3" md="3" sm="12" v-for="(item,index) in jakes" :key="item.player">  
                 </v-col>    
               </v-row>
             </v-col>       
@@ -313,7 +344,19 @@
         showNoPlayers: false,
         showHistoryTable: false,
         showJakeRankings: false,
-        infoPanelDisabled: false,
+onents: {  },
+    data () {
+      return {
+        currentWeek: 0,
+        currentSeason: 0,    
+        inProgress: false,    
+        lastUpdated: 0,
+        players: [],
+        jakes: [],
+        expandedBreakdown: [],
+        showNoPlayers: false,
+        showHistoryTable: false,
+        showJakeRankings: false,
         infopanels: [0],
         jakesHistory: [],
         playersHistory: [],
