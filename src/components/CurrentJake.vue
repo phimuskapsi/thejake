@@ -12,20 +12,21 @@
                 </v-list-item-content>
               </v-list-item>
            
-                        <v-divider></v-divider>
-            <v-list dense>
-              <v-list-item>
-                <v-list-item-content>
-                  <v-list-item-title>Current Week</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-content>
-                  <v-list-item-title>Historical Stats</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
-            <v-divider></v-divider>
+              <v-divider></v-divider>
+              <v-list dense>
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>Current Week</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>Historical Stats</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+              <v-divider></v-divider>
+            </template>
           </v-navigation-drawer>
         </v-col>
         <v-col cols="12" class="d-md-none">
@@ -332,19 +333,6 @@
   
   export default {
     components: {  },
-    data () {
-      return {
-        currentWeek: 0,
-        currentSeason: 0,    
-        inProgress: false,    
-        lastUpdated: 0,
-        players: [],
-        jakes: [],
-        expandedBreakdown: [],
-        showNoPlayers: false,
-        showHistoryTable: false,
-        showJakeRankings: false,
-onents: {  },
     data () {
       return {
         currentWeek: 0,
