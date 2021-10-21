@@ -314,7 +314,7 @@
 <script>
   // import HistoricalJakes from './HistoricalJakes';
   import NFLData from '../plugins/pffFunctions.js';
-  import * as moment from 'moment'
+  import * as moment from 'moment-timezone'
   
   export default {
     components: {  },
