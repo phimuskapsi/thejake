@@ -182,30 +182,51 @@
                             </v-list-item>                           
                           </v-img>
                         </div>
-                        <div class="col-md-2">
-                          <v-card class="mx-auto" outlined tile height="250px">          
-                            <v-card-title>
-                              Jake Stats:
-                            </v-card-title>                 
+                        <div class="col-md-9">
+                          <v-card class="mx-auto stat-card" outlined tile height="250px" style="font-family:'Courier New', monospace;">                         
                             <v-card-text>
-                              <v-list dense>
-                                <v-list-item style="min-height:20px;">
-                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
-                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
-                                </v-list-item>
-                                <v-list-item style="min-height:20px;">
-                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
-                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
-                                </v-list-item>
-                                <v-list-item style="min-height:20px;">
-                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
-                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
-                                </v-list-item>
-                                <v-list-item style="min-height:20px;">
-                                  <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
-                                  <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
-                                </v-list-item>
-                              </v-list>
+                              <v-row>
+                                <v-col>
+                                  <v-list dense>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>TruJake:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.ultimate_score }}</v-list-item-content>
+                                    </v-list-item>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>Jake Score:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.jake_score }}</v-list-item-content>
+                                    </v-list-item>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>INT:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.ints }}</v-list-item-content>
+                                    </v-list-item>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>FUM LOST:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.fumbles }}</v-list-item-content>
+                                    </v-list-item>
+                                  </v-list>
+                                </v-col>
+                                <v-col>
+                                  <v-list dense>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>Comp %:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.comp_per }}</v-list-item-content>
+                                    </v-list-item>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>YPA:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.ypa }}</v-list-item-content>
+                                    </v-list-item>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>QBR:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.qbr }}</v-list-item-content>
+                                    </v-list-item>
+                                    <v-list-item class="statline">
+                                      <v-list-item-content class="statline-title"><strong>Sacks:</strong></v-list-item-content>
+                                      <v-list-item-content class="statline-value">{{ item.sacks }}</v-list-item-content>
+                                    </v-list-item>
+                                  </v-list>
+                                </v-col>
+                              </v-row>
                             </v-card-text>
                           </v-card>
                         </div>
@@ -214,43 +235,7 @@
                       <v-expansion-panel-content>
                         <v-card class="mx-auto" outlined tile min-height="475px">                           
                           <v-card-text>
-                            <v-list dense>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>TruJake:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ultimate_score }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Jake Score:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.jake_score }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>INT:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ints }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>FUM LOST:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.fumbles }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-
-                              </v-list-item>                           
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Comp %:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.comp_per }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>YPA:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.ypa }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>QBR:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.qbr }}</v-list-item-content>
-                              </v-list-item>
-                              <v-list-item style="min-height:20px;">
-                                <v-list-item-content style="font-size:12px;padding:0;"><strong>Sacks:</strong></v-list-item-content>
-                                <v-list-item-content style="font-size:12px;padding:0;">{{ item.sacks }}</v-list-item-content>
-                              </v-list-item> 
-                            </v-list>
+                            
                           </v-card-text>             
                         </v-card>
                       </v-expansion-panel-content>
@@ -339,6 +324,7 @@
         currentSeason: 0,    
         inProgress: false,    
         lastUpdated: 0,
+        games: [],
         players: [],
         jakes: [],
         expandedBreakdown: [],
@@ -406,12 +392,11 @@
     mounted () {
       this.updateProgress(true);
       this.setupData().then(() => {   
-        this.updateProgress(25, 'Getting ESPN/Yahoo Data...');     
-        this.refreshWeek(this.currentSeason, this.currentWeek).then(() => {
+        this.updateProgress(25, 'Setting up things...');     
+        this.refreshSeason().then(() => {
           this.updateProgress(50, 'Getting Jake Data for Week...');
           this.getJakes().then(() => {
             this.updateProgress(75, 'Getting Player Data for Week...');
-            this.startUpdater();
             this.getHistory(false).then(() => {
               this.updateProgress(100);
             });
@@ -576,7 +561,7 @@
 
             if(refresh) {
               this.updateProgress(true);
-              this.refreshWeek(this.currentSeason, this.currentWeek).then(() => {
+              this.refreshSeason().then(() => {
                 this.getJakes();
                 this.updateProgress(false);
               });              
@@ -589,11 +574,11 @@
         this.showHistoryTable = false;
         return;
       },      
-      async refreshWeek(season = 0, week = 0) {
-        this.lastUpdated = moment().millisecond();        
-        if(season >= 2020) {
-          await this.NFLData.updateCurrentWeek(season, week);
-        }
+      async refreshSeason() {
+        //let getAllSeasons = false;
+        //let update = true;
+        this.lastUpdated = moment().tz('America/New_York').format('Y-m-d HH:mm:ss');
+        //this.NFLData.setupSeasonData(season, getAllSeasons, update);
       },
       async setupData () {           
         await this.NFLData.init();
@@ -627,9 +612,6 @@
         }
 
         this.playersHistory = [...this.jakesHistory];
-      },
-      async startUpdater() {
-        
       },
       updateProgress(val, text) {
         if(val === 100) {
@@ -714,6 +696,24 @@
 
   .headline {
     width: 100%;    
+  }
+
+  .stat-card {
+
+  }
+
+  .statline {
+    margin-bottom:0.5em;
+    min-height:20px;padding:1em;
+    border-bottom:2px solid #999;
+  }
+
+  .statline-title {
+    font-size:18px;padding:0;font-weight:600;color: #000 !important;
+  }
+
+  .statline-value {
+    font-size:18px;padding:0;color: #000;
   }
 
   .v-card__text {

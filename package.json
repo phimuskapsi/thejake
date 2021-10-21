@@ -17,6 +17,7 @@
     "idb": "^4.0.5",
     "mariadb": "^2.1.2",
     "moment": "^2.24.0",
+    "moment-timezone": "^0.5.33",
     "node-fetch": "^2.6.0",
     "vue": "^2.6.12",
     "vue-loader": "^15.9.3",
