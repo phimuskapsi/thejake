@@ -264,9 +264,9 @@ export default class NFLData {
 
           let new_game = {
             id: game.id,
-            date: moment(game.date)
+            game_date: moment(game.date)
               .tz("America/New_York")
-              .format("Y-m-d HH:mm"),
+              .format("Y-MM-DD"),
             status: game.competitions[0].status,
             name: game.name,
             score_away: away_team.score,

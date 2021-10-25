@@ -16,12 +16,16 @@
               <v-list dense>
                 <v-list-item>
                   <v-list-item-content>
-                    <v-list-item-title>Current Week</v-list-item-title>
+                    <v-list-item-title style="cursor:pointer !important;text-decoration:underline;">
+                      <router-link to="/">Current Stats</router-link>
+                    </v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
                 <v-list-item>
                   <v-list-item-content>
-                    <v-list-item-title>Historical Stats</v-list-item-title>
+                    <v-list-item-title style="cursor:pointer !important;text-decoration:underline;">
+                      <router-link to="/history">Historical Stats</router-link>
+                    </v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
               </v-list>
@@ -704,7 +708,7 @@
 
   .statline {
     margin-bottom:0.5em;
-    min-height:20px;padding:1em;
+    min-height:20px;padding:.25em;
     border-bottom:2px solid #999;
   }
 
@@ -722,5 +726,9 @@
 
   .v-card__title {
     background: transparent !important;
+  }
+
+  .v-image__image {
+    background-position: top center !important;
   }
 </style>
