@@ -3,35 +3,7 @@
     <v-container fluid v-if="!inProgress">          
       <v-row no-gutters>
         <v-col md="3" lg="2" xl="2" class="d-none d-md-block">
-          <v-navigation-drawer>
-            <template v-slot:prepend>
-              <v-list-item two-line>
-                <v-list-item-content>
-                  <v-list-item-title>Navigation</v-list-item-title>
-                  <v-list-item-subtitle></v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-           
-              <v-divider></v-divider>
-              <v-list dense>
-                <v-list-item>
-                  <v-list-item-content>
-                    <v-list-item-title style="cursor:pointer !important;text-decoration:underline;">
-                      <router-link to="/">Current Stats</router-link>
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-content>
-                    <v-list-item-title style="cursor:pointer !important;text-decoration:underline;">
-                      <router-link to="/history">Historical Stats</router-link>
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-              <v-divider></v-divider>
-            </template>
-          </v-navigation-drawer>
+         <side-nav></side-nav>
         </v-col>
         <v-col cols="12" class="d-md-none">
 
@@ -317,11 +289,12 @@
 
 <script>
   // import HistoricalJakes from './HistoricalJakes';
+  import SideNav from "./SideNav";
   import NFLData from '../plugins/pffFunctions.js';
   import * as moment from 'moment-timezone'
   
   export default {
-    components: {  },
+    components: { SideNav },
     data () {
       return {
         currentWeek: 0,
