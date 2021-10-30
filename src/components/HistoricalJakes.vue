@@ -234,7 +234,7 @@ export default {
           },
           {
             type: "line",
-            values: [],
+            values: [0],
             text: "Score"
           }
         ]
@@ -242,13 +242,14 @@ export default {
 
       for (let hh = 0; hh < this.history.length; hh++) {
         var hist = this.history[hh];
+        var scorePercent = (hist.record_jake * 100).toFixed(2);
         this.historyChart.series[0].values.push(hist.jake_position_1);
         this.historyChart.series[1].values.push(hist.jake_position_2);
         this.historyChart.series[2].values.push(hist.jake_position_3);
         this.historyChart.series[3].values.push(hist.jake_position_4);
         this.historyChart.series[4].values.push(hist.totalJakes);
         this.historyChart.series[5].values.push(hist.totalGames);
-        this.historyChart.series[6].values.push(hist.record_jake);
+        this.historyChart.series[6].values.push(scorePercent);
 
         this.historyChart["scale-x"].labels.push(hist.full_name);
       }
