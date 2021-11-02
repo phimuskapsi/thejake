@@ -14,6 +14,7 @@ export default class NFLData {
     this.weekGames = [];
     this.week = 0;
     this.season = 0;
+    this.seasons = [];
   }
 
   async init() {
@@ -130,14 +131,43 @@ export default class NFLData {
 
       // If we are in the post-season, ESPN re-numbers their weeks from 1-5 (WC, Div, Conf, ProBowl, SuperBowl)
       if (seasonType === 3) currentWeek += 17;
-
       this.week = currentWeek;
+
+      for (let s = 2008; s <= this.season; s++) {
+        this.seasons.push(s);
+      }
 
       return true;
     } catch (err) {
       //eslint-disable-next-line
       console.log("error:", err);
       return err;
+    }
+  }
+
+  async getESPNPowerRankings(all = false, season = false, week = false) {
+    let seasons = [];
+    let rankings = [];
+    if (all) {
+      // Get all season info
+      let rankings_req = await fetch(
+        "http://xperimental.io:4200/api/v1/get/power_rankings/all"
+      );
+      rankings = await rankings_req.json();
+    } else if (season && week) {
+      let rankings_req = await fetch(
+        `http://xperimental.io:4200/api/v1/get/power_rankings/season/${season}/week/${week}`
+      );
+      rankings = await rankings_req.json();
+    } else if (season && !week) {
+      let rankings_req = await fetch(
+        `http://xperimental.io:4200/api/v1/get/power_rankings/season/${season}`
+      );
+      rankings = await rankings_req.json();
+    }
+
+    if (rankings && rankings.rankings.length > 0) {
+      return { success: true, rankings: rankings.rankings };
     }
   }
 
@@ -379,6 +409,27 @@ export default class NFLData {
     }
   }
 
+  async getJakesUltimate(season) {
+    let players = [];
+    let getSeason = season > 0 ? season : this.season;
+    try {
+      let jakeReq = await fetch(
+        `http://xperimental.io:4200/api/v1/get/jakes/ultimate/${getSeason}`
+      );
+      players = await jakeReq.json();
+
+      if (players.length > 0) {
+        return { success: true, players: players.jakes };
+      }
+
+      throw { success: false, msg: "no players found" };
+    } catch (err) {
+      //eslint-disable-next-line
+      console.log("error:", err);
+      return err;
+    }
+  }
+
   async getPlayersByWeek(season = 0, week = 0) {
     let players = [];
 
@@ -415,6 +466,21 @@ export default class NFLData {
       }
 
       throw { success: false, msg: "no players to fetch" };
+    } catch (err) {
+      //eslint-disable-next-line
+      console.log("error:", err);
+      return err;
+    }
+  }
+
+  async getTeamInfo(season = 2021) {
+    try {
+      let team_req = await fetch(
+        `http://xperimental.io:4200/get/pff/teams/${season}`
+      );
+      let team_json = team_req.json();
+
+      return { success: true, teams: team_json };
     } catch (err) {
       //eslint-disable-next-line
       console.log("error:", err);

@@ -24,6 +24,15 @@
             <v-list-item-title
               style="cursor:pointer !important;text-decoration:underline;"
             >
+              <router-link to="/graf">Graf</router-link>
+            </v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title
+              style="cursor:pointer !important;text-decoration:underline;"
+            >
               <router-link to="/history">Historical Stats</router-link>
             </v-list-item-title>
           </v-list-item-content>

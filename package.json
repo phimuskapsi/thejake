@@ -23,6 +23,7 @@
     "vue-loader": "^15.9.3",
     "vue-router": "^3.1.3",
     "vuetify": "^2.0.0",
+    "zingchart": "^2.9.7",
     "zingchart-vue": "^2.0.3"
   },
   "devDependencies": {

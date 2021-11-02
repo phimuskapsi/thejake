@@ -40,6 +40,9 @@ export default {
     progressColor: "blue accent-4"
   }),
   methods: {
+    async initNFLData() {
+      await this.$NFLData.init();
+    },
     stopProgress() {
       this.showProgress = false;
     },
@@ -92,6 +95,9 @@ export default {
         }
       }
     }
+  },
+  mounted() {
+    this.initNFLData();
   }
 };
 </script>

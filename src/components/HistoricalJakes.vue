@@ -44,7 +44,6 @@
 
 <script>
 import SideNav from "./SideNav";
-import NFLData from "../plugins/pffFunctions.js";
 
 export default {
   components: { SideNav },
@@ -77,7 +76,6 @@ export default {
       teamDefChart: {},
       teamDefSeasonChart: {},
       teamPlayerChart: {},
-      NFLData: new NFLData(),
       showHistory: false,
       showHistoryTable: false,
       showTeamDef: false,
@@ -104,9 +102,9 @@ export default {
     },
     async getHistory() {
       //var self = this;
-      //var historicalStats = await this.NFLData.getJakesByWeek(0, 0);
-      var history = await this.NFLData.getJakesHistory();
-      var teamHistories = await this.NFLData.calcDefStats();
+      //var historicalStats = await this.$NFLData.getJakesByWeek(0, 0);
+      var history = await this.$NFLData.getJakesHistory();
+      var teamHistories = await this.$NFLData.calcDefStats();
 
       this.history = history.players;
       this.teamHistories = teamHistories;
@@ -279,7 +277,7 @@ export default {
             ].players;
             this.showHistoryTable = true;
           } else {
-            let weekData = await this.NFLData.getJakesByWeek(
+            let weekData = await this.$NFLData.getJakesByWeek(
               this.selectedSeason,
               this.selectedWeek
             );
@@ -299,9 +297,12 @@ export default {
     },
     async setupData() {
       this.updateProgress(true);
-      await this.NFLData.init();
-      this.selectedSeason = this.NFLData.season;
-      this.selectedWeek = this.NFLData.week;
+
+      localStorage.setItem("history-jake_season", this.$NFLData.season);
+      localStorage.setItem("history-jake_week", this.$NFLData.week);
+
+      this.selectedSeason = this.$NFLData.season;
+      this.selectedWeek = this.$NFLData.week;
       let maxWeek = this.selectedWeek;
 
       for (let y = this.selectedSeason; y > 2007; y--) {
