@@ -1,6 +1,3 @@
-import axios from "axios";
-import e from "cors";
-import { cp } from "fs";
 import * as moment from "moment-timezone";
 
 export default class NFLData {
@@ -414,11 +411,42 @@ export default class NFLData {
     let getSeason = season > 0 ? season : this.season;
     try {
       let jakeReq = await fetch(
-        `http://xperimental.io:4200/api/v1/get/jakes/ultimate/${getSeason}`
+        `http://xperimental.io:4200/api/v1/get/ultimate/${getSeason}`
       );
       players = await jakeReq.json();
 
-      if (players.length > 0) {
+      if (players && players.jakes && players.jakes.length > 0) {
+        for (let p = 0; p < players.jakes.length; p++) {
+          let jake = players.jakes[p];
+          let positions = jake.positions.split(",");
+          let ordered = {
+            first: 0,
+            second: 0,
+            third: 0,
+            fourth: 0
+          };
+
+          for (let pos in positions) {
+            let position = positions[pos];
+            if (parseInt(position) === 1) {
+              ordered.first++;
+            }
+            if (parseInt(position) === 2) {
+              ordered.second++;
+            }
+            if (parseInt(position) === 3) {
+              ordered.third++;
+            }
+            if (parseInt(position) === 4) {
+              ordered.fourth++;
+            }
+          }
+
+          players.jakes[p].qbr_avg = players.jakes[p].qbr_avg.toFixed(2);
+          players.jakes[p].jake_total = players.jakes[p].jake_total.toFixed(2);
+          players.jakes[p].positions = ordered;
+        }
+
         return { success: true, players: players.jakes };
       }
 

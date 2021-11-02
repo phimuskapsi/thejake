@@ -218,7 +218,7 @@
                     </v-expansion-panel>
                   </v-expansion-panels>
                 </v-col>
-                <v-col lg="3" md="3" sm="12" v-for="(item,index) in jakes" :key="item.player">  
+                <v-col lg="3" md="3" sm="12" v-for="item in jakes" :key="item.player">  
                 </v-col>    
               </v-row>
             </v-col>       
@@ -289,6 +289,7 @@
 
 <script>
   // import HistoricalJakes from './HistoricalJakes';
+  import NFLData from "../plugins/pffFunctions.js";
   import SideNav from "./SideNav";
   import * as moment from 'moment-timezone'
   
@@ -303,6 +304,7 @@
         games: [],
         players: [],
         jakes: [],
+        NFLData: new NFLData(),
         expandedBreakdown: [],
         showNoPlayers: false,
         showHistoryTable: false,
@@ -386,7 +388,7 @@
     },
     methods: {
       assignImages () {
-        var no_name_used = false;
+        //var no_name_used = false;
         for(var j=0;j<this.jakes.length;j++) {      
           let img = '';    
           try {
@@ -431,7 +433,7 @@
       },
       async getJakes () {
         //var self = this;            
-        var jakeData = await this.$NFLData.getJakesByWeek(this.currentSeason, this.currentWeek);        
+        var jakeData = await this.NFLData.getJakesByWeek(this.currentSeason, this.currentWeek);        
         //eslint-disable-next-line
         //console.log('weekData:', weekData);
         if(jakeData.success) {
@@ -498,7 +500,7 @@
             if (this.jakesHistory[this.selectedSeason][this.selectedWeek] && this.jakesHistory[this.selectedSeason][this.selectedWeek].players && this.jakesHistory[this.selectedSeason][this.selectedWeek].players.length > 0) {
               this.selectedJakeHistory = this.jakesHistory[this.selectedSeason][this.selectedWeek].players;
 
-              var allPlayers = await this.$NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek);
+              var allPlayers = await this.NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek);
               if(Array.isArray(allPlayers.players) && allPlayers.players.length > 0) {
                 this.playersHistory[this.selectedSeason][this.selectedWeek].players = allPlayers.players;
                 this.selectedPlayerHistory = allPlayers.players;
@@ -509,7 +511,7 @@
               let weekJakeData = null;
               let weekPlayerData = null;
 
-              Promise.all([this.$NFLData.getJakesByWeek(this.selectedSeason, this.selectedWeek), this.$NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek)]).then((values) => {
+              Promise.all([this.NFLData.getJakesByWeek(this.selectedSeason, this.selectedWeek), this.NFLData.getPlayersByWeek(this.selectedSeason, this.selectedWeek)]).then((values) => {
                 if(values[0].success && values[1].success) {
                   weekJakeData = values[0].players;
                   weekPlayerData = values[1].players;
@@ -553,14 +555,16 @@
         //let getAllSeasons = false;
         //let update = true;
         this.lastUpdated = moment().tz('America/New_York').format('Y-m-d HH:mm:ss');
-        //this.$NFLData.setupSeasonData(season, getAllSeasons, update);
+        //this.NFLData.setupSeasonData(season, getAllSeasons, update);
       },
-      async setupData () {           
-        localStorage.setItem('current-jake_season', this.$NFLData.season);
-        localStorage.setItem('current-jake_week', this.$NFLData.week);
+      async setupData () {    
+        await this.NFLData.init();
 
-        this.currentWeek = this.$NFLData.week;
-        this.currentSeason = this.$NFLData.season;
+        localStorage.setItem('current-jake_season', this.NFLData.season);
+        localStorage.setItem('current-jake_week', this.NFLData.week);
+
+        this.currentWeek = this.NFLData.week;
+        this.currentSeason = this.NFLData.season;
         this.selectedSeason = this.currentSeason;
         this.selectedWeek = this.currentWeek;
         let maxWeek = this.currentWeek;

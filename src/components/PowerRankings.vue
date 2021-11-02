@@ -34,8 +34,8 @@
               :data="powerRankSeasonChart2"
               width="100%"
               height="100%"
-            ></zingchart>-->
-          </div>
+            ></zingchart>
+          </div>-->
         </v-col>
       </v-row>
     </v-container>
@@ -44,17 +44,19 @@
 
 <script>
 import SideNav from "./SideNav";
+import NFLData from "../plugins/pffFunctions.js";
 import "zingchart/modules-es6/zingchart-rankflow.min.js";
 
 export default {
   components: { SideNav },
   data() {
     return {
+      NFLData: new NFLData(),
       powerRankSeasonChart: {},
       powerRankSeasonChart2: {},
       rankingsData: [],
       rankingsForChart: [],
-      showGraf: true,
+      showGraf: false,
       seasonsSelect: [],
       selectedSeason: 0,
       weeks: [],
@@ -64,7 +66,7 @@ export default {
   methods: {
     async getData(season, update = true) {
       this.showGraf = false;
-      let pr_data = await this.$NFLData.getESPNPowerRankings(false, season);
+      let pr_data = await this.NFLData.getESPNPowerRankings(false, season);
       this.rankingsData = pr_data.rankings;
 
       if (update) {
@@ -73,11 +75,14 @@ export default {
       }
     },
     async loadData() {
-      localStorage.setItem("graf_season", this.$NFLData.season);
-      localStorage.setItem("graf_week", this.$NFLData.week);
-      this.seasonsSelect = this.$NFLData.seasons;
-      this.selectedSeason = this.$NFLData.season;
-      await this.getData(this.$NFLData.season);
+      await this.NFLData.init();
+
+      localStorage.setItem("graf_season", this.NFLData.season);
+      localStorage.setItem("graf_week", this.NFLData.week);
+
+      this.seasonsSelect = this.NFLData.seasons;
+      this.selectedSeason = this.NFLData.season;
+      await this.getData(this.NFLData.season);
     },
     async setupChart() {
       let series_temp = [];
