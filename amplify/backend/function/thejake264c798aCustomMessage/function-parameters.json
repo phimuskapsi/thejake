@@ -1,0 +1,26 @@
+{
+  "trigger": true,
+  "modules": [
+    "verification-link"
+  ],
+  "parentResource": "thejake264c798a",
+  "functionName": "thejake264c798aCustomMessage",
+  "resourceName": "thejake264c798aCustomMessage",
+  "parentStack": "auth",
+  "triggerEnvs": [
+    {
+      "key": "RESOURCENAME",
+      "value": "resourceName"
+    }
+  ],
+  "triggerDir": "/home/cknapp/.nvm/versions/node/v16.11.1/lib/node_modules/@aws-amplify/cli/node_modules/@aws-amplify/amplify-category-auth/provider-utils/awscloudformation/triggers/CustomMessage",
+  "triggerTemplate": "CustomMessage.json.ejs",
+  "triggerEventPath": "CustomMessage.event.json",
+  "roleName": "thejake264c798aCustomMessage",
+  "skipEdit": true,
+  "REDIRECTURL": "",
+  "EMAILSUBJECT": "d to upon account confirmation: Welcome To 'The Worst!' - Let's get you setup.",
+  "EMAILMESSAGE": "Welcome to 'The Worst!'. Click the link below to confirm the creation of your account.",
+  "RESOURCENAME": "resourceName",
+  "enableCors": false
+}

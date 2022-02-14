@@ -6,38 +6,40 @@
           <side-nav></side-nav>
         </v-col>
         <v-col cols="12" class="d-md-none"> </v-col>
-        <v-col
-          xl="10"
-          lg="10"
-          md="9"
-          sm="12"
-          style="padding: 0em 2em !important;"
-        >
-          <v-tabs v-model="tab" background-color="grey darken-3" dark>
-            <v-tab key="weekly">Weekly Winners</v-tab>
-            <v-tab v-for="score in scoreTabs" :key="score">
-              Score: {{ score }}
-            </v-tab>
-          </v-tabs>
-          <v-tabs-items v-model="tab">
-            <v-tab-item key="weekly">
-              <v-data-table
-                :headers="headers"
-                :items="jakeWinners"
-                :items-per-page="50"
-                class="elevation-2"
-              ></v-data-table>
-            </v-tab-item>
-            <v-tab-item v-for="score in scoreTabs" :key="score">
-              <v-data-table
-                :headers="headers"
-                :items="jakesByScore[score]"
-                :items-per-page="50"
-                class="elevation-2"
-              ></v-data-table>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-col>
+        <keep-alive>
+          <v-col
+            xl="10"
+            lg="10"
+            md="9"
+            sm="12"
+            style="padding: 0em 2em !important;"
+          >
+            <v-tabs v-model="tab" background-color="grey darken-3" dark>
+              <v-tab key="weekly">Weekly Winners</v-tab>
+              <v-tab v-for="score in scoreTabs" :key="score">
+                Score: {{ score }}
+              </v-tab>
+            </v-tabs>
+            <v-tabs-items v-model="tab">
+              <v-tab-item key="weekly">
+                <v-data-table
+                  :headers="headers"
+                  :items="jakeWinners"
+                  :items-per-page="50"
+                  class="elevation-2"
+                ></v-data-table>
+              </v-tab-item>
+              <v-tab-item v-for="score in scoreTabs" :key="score">
+                <v-data-table
+                  :headers="headers"
+                  :items="jakesByScore[score]"
+                  :items-per-page="50"
+                  class="elevation-2"
+                ></v-data-table>
+              </v-tab-item>
+            </v-tabs-items>
+          </v-col>
+        </keep-alive>
       </v-row>
     </v-container>
   </div>

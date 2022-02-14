@@ -1,0 +1,30 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-thejake-dev-133229-authRole",
+      "UnauthRoleArn": "arn:aws:iam::448927052941:role/amplify-thejake-dev-133229-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::448927052941:role/amplify-thejake-dev-133229-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-thejake-dev-133229-deployment",
+      "UnauthRoleName": "amplify-thejake-dev-133229-unauthRole",
+      "StackName": "amplify-thejake-dev-133229",
+      "StackId": "arn:aws:cloudformation:us-east-1:448927052941:stack/amplify-thejake-dev-133229/37ee95d0-5855-11ec-96fe-12d469082259",
+      "AmplifyAppId": "d2nhar29vq9142",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-thejake-dev-133229-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+    },
+    "categories": {
+      "auth": {
+        "thejake264c798a": {}
+      },
+      "function": {
+        "thejake264c798aCustomMessage": {
+          "REDIRECTURL": "",
+          "EMAILSUBJECT": "d to upon account confirmation: Welcome To 'The Worst!' - Let's get you setup.",
+          "EMAILMESSAGE": "Welcome to 'The Worst!'. Click the link below to confirm the creation of your account.",
+          "deploymentBucketName": "amplify-thejake-dev-133229-deployment",
+          "s3Key": "amplify-builds/thejake264c798aCustomMessage-435a4750782b53794149-build.zip"
+        }
+      }
+    }
+  }
+}

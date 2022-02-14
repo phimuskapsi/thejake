@@ -573,16 +573,16 @@
           this.jakesHistory[y] = [];
           this.seasons.push(y);
 
-          if (y < this.currentSeason) maxWeek = 21;          
+          if (y < this.currentSeason) maxWeek = 23;          
           for (let w=1;w<=maxWeek;w++) {
             var weekName = `Week ${w}`;
-            if(w > 17) {
+            if(w > 18) {
               switch(w) {
-                case 18: weekName = 'Wild Card'; break;
-                case 19: weekName = 'Division Round'; break;
-                case 20: weekName = 'Conference Championship'; break;
-                case 21: weekName = 'Pro Bowl'; break;
-                case 22: weekName = 'Super Bowl'; break;    
+                case 19: weekName = 'Wild Card'; break;
+                case 20: weekName = 'Division Round'; break;
+                case 21: weekName = 'Conference Championship'; break;  
+                case 22: weekName = 'Pro Bowl'; break;             
+                case 23: weekName = 'Super Bowl'; break;    
               }
             }
             if (typeof this.weeks[w] === 'undefined') this.weeks.push({ name: weekName, number: w});            
