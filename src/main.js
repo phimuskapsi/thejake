@@ -15,7 +15,7 @@ import UltimateJake from "./components/UltimateJake";
 
 /* Auth Stuff */
 // eslint-ignore-next-line
-import Amplify, { Auth } from "aws-amplify";
+import Amplify from "aws-amplify";
 import awsconfig from "./aws-exports";
 Amplify.configure(awsconfig);
 
