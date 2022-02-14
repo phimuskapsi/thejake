@@ -26,7 +26,7 @@
               :items-per-page="50"
               :single-expand="false"
               item-key="player"
-              :expanded.sync="ultimateTableExpanded"
+              v-model:expanded="ultimateTableExpanded"
               show-expand
               class="elevation-2"
             >

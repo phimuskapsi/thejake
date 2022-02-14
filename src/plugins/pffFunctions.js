@@ -34,6 +34,7 @@ export default class NFLData {
       for (let t = 0; t < history_teams.length; t++) {
         let team = history_teams[t];
         let team_color = await JSON.parse(team.winner_color);
+        // eslint-disable-next-line
         console.log("starting team: " + team.winner);
 
         if (!team_totals[team.winner_id])
@@ -143,7 +144,6 @@ export default class NFLData {
   }
 
   async getESPNPowerRankings(all = false, season = false, week = false) {
-    let seasons = [];
     let rankings = [];
     if (all) {
       // Get all season info
@@ -222,8 +222,7 @@ export default class NFLData {
         },
         body: JSON.stringify(seasons)
       });
-
-      var updated_season = await updated_season_resp.json();
+      await updated_season_resp.json();
     }
 
     return seasons;

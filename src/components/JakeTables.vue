@@ -124,6 +124,7 @@ export default {
           throw "Failed to fetch data from API.";
         }
       } catch (err) {
+        //eslint-disable-next-line
         console.log("Error:", err);
       }
     }

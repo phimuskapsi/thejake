@@ -1,5 +1,5 @@
 import "zingchart/es6";
-import Vue from "vue";
+import Vue, { createApp, h } from "vue";
 import App from "./App.vue";
 import "zingchart/es6";
 import zingchartVue from "zingchart-vue";
@@ -14,6 +14,7 @@ import TheWorst from "./components/TheWorst";
 import UltimateJake from "./components/UltimateJake";
 
 /* Auth Stuff */
+// eslint-ignore-next-line
 import Amplify, { Auth } from "aws-amplify";
 import awsconfig from "./aws-exports";
 Amplify.configure(awsconfig);
@@ -33,10 +34,8 @@ applyPolyfills().then(() => {
 // Main project plugins
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-Vue.config.productionTip = false;
 Vue.config.ignoredElements = [/amplify-\w*/];
 Vue.component("zingchart", zingchartVue);
-Vue.use(VueRouter);
 
 const routes = [
   { path: "/", component: CurrentJake },
@@ -51,8 +50,9 @@ const router = new VueRouter({
   routes
 });
 
-new Vue({
-  router,
+createApp({
   vuetify,
-  render: h => h(App)
-}).$mount("#app");
+  render: () => h(App)
+})
+  .use(router)
+  .mount("#app");

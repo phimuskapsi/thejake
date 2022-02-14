@@ -89,8 +89,8 @@ export default {
   created() {
     this.setupData().then(dataOK => {
       if (dataOK) {
-        this.getHistory().then(hresp => {
-          this.drawHistoryGraphs().then(dresp => {
+        this.getHistory().then(() => {
+          this.drawHistoryGraphs().then(() => {
             this.finishAndShow();
           });
         });
@@ -267,7 +267,7 @@ export default {
 
       this.showTeamDef = true;
     },
-    async getHistoryByWeek(refresh = true) {
+    async getHistoryByWeek() {
       if (this.selectedSeason > 0) {
         if (this.selectedWeek > 0) {
           if (

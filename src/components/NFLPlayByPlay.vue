@@ -1,27 +1,15 @@
 <template>
-  <div>    
-    <v-container fluid>     
-      <v-row>
-      </v-row>
+  <div>
+    <v-container fluid>
+      <v-row> </v-row>
     </v-container>
   </div>
 </template>
 <script>
-  // import HistoricalJakes from './HistoricalJakes';
-  import NFLData from '../plugins/pffData.js';
-  import * as moment from 'moment'
-  
-  export default {
-    components: {  },
-    data () {
-      return {
+// import HistoricalJakes from './HistoricalJakes';
+// import NFLData from '../plugins/pffData.js';
+// import * as moment from 'moment'
 
-      }
-    },
-    methods: {
-
-    }
-  }
+export default {};
 </script>
-<style>
-</style>
+<style></style>
