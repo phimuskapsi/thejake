@@ -15,25 +15,25 @@ export default class NFLData {
   }
 
   async init() {
-    let self = this;
+    const self = this;
     await self.getCurrentWeek();
   }
 
   async calcDefStats() {
     try {
-      let teamsResp = await fetch(
+      const teamsResp = await fetch(
         `http://xperimental.io:4200/api/v1/get/jakes/def/`
       );
-      let teamsRespJSON = await teamsResp.json();
-      let history_teams = teamsRespJSON.history;
+      const teamsRespJSON = await teamsResp.json();
+      const history_teams = teamsRespJSON.history;
 
-      let team_totals = {};
-      let team_season_totals = {};
-      let team_jakes_totals = {};
+      const team_totals = {};
+      const team_season_totals = {};
+      const team_jakes_totals = {};
 
       for (let t = 0; t < history_teams.length; t++) {
-        let team = history_teams[t];
-        let team_color = await JSON.parse(team.winner_color);
+        const team = history_teams[t];
+        const team_color = await JSON.parse(team.winner_color);
         // eslint-disable-next-line
         console.log("starting team: " + team.winner);
 
@@ -68,8 +68,8 @@ export default class NFLData {
         team_jakes_totals[team.player_id][team.winner_id].total++;
       }
 
-      let tt = [];
-      for (let k in team_totals) {
+      const tt = [];
+      for (const k in team_totals) {
         tt.push(team_totals[k]);
       }
 
@@ -92,18 +92,18 @@ export default class NFLData {
 
   async getCurrentWeek() {
     try {
-      let req = await fetch(
+      const req = await fetch(
         "http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
       );
-      let json = await req.json();
+      const json = await req.json();
 
       this.week = json.week.number;
       this.season = json.season.year;
 
       // Get the calendar to figure out where we are.
-      let leagueData = json.leagues[0];
-      let calendar = leagueData.calendar;
-      let seasonType = parseInt(leagueData.season.type.type); // 1= Pre, 2= Reg, 3= Post, 4= Off
+      const leagueData = json.leagues[0];
+      const calendar = leagueData.calendar;
+      const seasonType = parseInt(leagueData.season.type.type); // 1= Pre, 2= Reg, 3= Post, 4= Off
 
       // If we are in the pre-season skip
       if (seasonType === 1)
@@ -118,7 +118,7 @@ export default class NFLData {
           msg: "we're in the off-season...stay tuned..."
         };
 
-      let currentDate = moment();
+      const currentDate = moment();
       let currentWeek = parseInt(
         calendar[seasonType - 1].entries.find(
           entry =>
@@ -147,17 +147,17 @@ export default class NFLData {
     let rankings = [];
     if (all) {
       // Get all season info
-      let rankings_req = await fetch(
+      const rankings_req = await fetch(
         "http://xperimental.io:4200/api/v1/get/power_rankings/all"
       );
       rankings = await rankings_req.json();
     } else if (season && week) {
-      let rankings_req = await fetch(
+      const rankings_req = await fetch(
         `http://xperimental.io:4200/api/v1/get/power_rankings/season/${season}/week/${week}`
       );
       rankings = await rankings_req.json();
     } else if (season && !week) {
-      let rankings_req = await fetch(
+      const rankings_req = await fetch(
         `http://xperimental.io:4200/api/v1/get/power_rankings/season/${season}`
       );
       rankings = await rankings_req.json();
@@ -169,25 +169,25 @@ export default class NFLData {
   }
 
   async getESPNSchedule(season, week, seasonType, returnContent = false) {
-    let espnSchedule = await fetch(
+    const espnSchedule = await fetch(
       `https://secure.espn.com/core/nfl/schedule?year=${season}&week=${week}&seasontype=${seasonType +
         1}&xhr=1&render=false`
     );
-    let espnScheduleData = await espnSchedule.json();
+    const espnScheduleData = await espnSchedule.json();
     return returnContent
       ? espnScheduleData.content
       : espnScheduleData.content.schedule;
   }
 
   async setupSeasonData(season, getAllSeasons = false, update = false) {
-    let startYear = getAllSeasons ? 2008 : season;
-    let seasons = [];
+    const startYear = getAllSeasons ? 2008 : season;
+    const seasons = [];
 
     for (let y = startYear; y <= season; y++) {
-      let espnContent = await this.getESPNSchedule(y, 1, 1, true);
-      let calendar = espnContent.calendar;
+      const espnContent = await this.getESPNSchedule(y, 1, 1, true);
+      const calendar = espnContent.calendar;
 
-      let seasonData = {
+      const seasonData = {
         pre_start: moment(calendar[Object.keys(calendar)[0]].startDate)
           .tz("America/New_York")
           .format("YYYY-MM-DD HH:mm:ss"),
@@ -213,8 +213,8 @@ export default class NFLData {
     }
 
     if (update) {
-      var url = `http://xperimental.io:4200/api/v1/add/pff/seasons`;
-      var updated_season_resp = await fetch(url, {
+      const url = `http://xperimental.io:4200/api/v1/add/pff/seasons`;
+      const updated_season_resp = await fetch(url, {
         method: "post",
         headers: {
           Accept: "application/json",
@@ -237,22 +237,22 @@ export default class NFLData {
     last_updated = null
   ) {
     try {
-      let schedule = await this.getESPNSchedule(season, week, seasonType);
+      const schedule = await this.getESPNSchedule(season, week, seasonType);
 
       // Just return the schedule object, if this is false then we want actual game info.
       if (returnSchedule) return schedule;
-      let game_data = [];
-      let game_dates = Object.keys(schedule);
+      const game_data = [];
+      const game_dates = Object.keys(schedule);
       for (let d = 0; d < game_dates.length; d++) {
-        let game_date = schedule[game_dates[d]];
-        let games = game_date.games;
+        const game_date = schedule[game_dates[d]];
+        const games = game_date.games;
 
         for (let g = 0; g < games.length; g++) {
-          let game = games[g];
-          let away_team = game.competitions[0].competitors.find(
+          const game = games[g];
+          const away_team = game.competitions[0].competitors.find(
             competitor => competitor.homeAway === "away"
           );
-          let home_team = game.competitions[0].competitors.find(
+          const home_team = game.competitions[0].competitors.find(
             competitor => competitor.homeAway === "home"
           );
 
@@ -269,26 +269,26 @@ export default class NFLData {
           if (away_team.abbreviation === "ARI") away_team.abbreviation = "ARZ";
           if (home_team.abbreviation === "ARI") home_team.abbreviation = "ARZ";
 
-          let teamIdAR = await fetch(
+          const teamIdAR = await fetch(
             `http://xperimental.io:4200/api/v1/get/pff/team/${
               away_team.abbreviation
             }/${season}`
           );
-          let teamIdAJ = await teamIdAR.json();
-          let awayteamId = teamIdAJ.team[0].franchise_id;
+          const teamIdAJ = await teamIdAR.json();
+          const awayteamId = teamIdAJ.team[0].franchise_id;
 
-          let teamIdHR = await fetch(
+          const teamIdHR = await fetch(
             `http://xperimental.io:4200/api/v1/get/pff/team/${
               home_team.abbreviation
             }/${season}`
           );
 
-          let teamIdHJ = await teamIdHR.json();
-          let hometeamId = teamIdHJ.team[0].franchise_id;
-          let isTie =
+          const teamIdHJ = await teamIdHR.json();
+          const hometeamId = teamIdHJ.team[0].franchise_id;
+          const isTie =
             away_team.score === home_team.score && game.status.type.completed;
 
-          let new_game = {
+          const new_game = {
             id: game.id,
             game_date: moment(game.date)
               .tz("America/New_York")
@@ -310,8 +310,8 @@ export default class NFLData {
           };
 
           if (update) {
-            var url = `http://xperimental.io:4200/api/v1/add/pff/game`;
-            var updated_game_resp = await fetch(url, {
+            const url = `http://xperimental.io:4200/api/v1/add/pff/game`;
+            const updated_game_resp = await fetch(url, {
               method: "post",
               headers: {
                 Accept: "application/json",
@@ -320,7 +320,7 @@ export default class NFLData {
               body: JSON.stringify(new_game)
             });
 
-            var updatedGame = await updated_game_resp.json();
+            const updatedGame = await updated_game_resp.json();
             new_game.updated = updatedGame.success;
           } else {
             new_game.updated = false;
@@ -343,10 +343,10 @@ export default class NFLData {
   async getJakesByWeek(season = 0, week = 0) {
     let players = [];
 
-    let getSeason = season > 0 ? season : this.season;
-    let getWeek = week > 0 ? week : this.week;
+    const getSeason = season > 0 ? season : this.season;
+    const getWeek = week > 0 ? week : this.week;
     try {
-      let jakeReq = await fetch(
+      const jakeReq = await fetch(
         `http://xperimental.io:4200/api/v1/get/jakes/${getSeason}/${getWeek}`
       );
       players = await jakeReq.json();
@@ -365,9 +365,9 @@ export default class NFLData {
 
   async getJakesBySeason(season = 0) {
     let players = [];
-    let getSeason = season > 0 ? season : this.season;
+    const getSeason = season > 0 ? season : this.season;
     try {
-      let jakeReq = await fetch(
+      const jakeReq = await fetch(
         `http://xperimental.io:4200/api/v1/get/jakes/${getSeason}`
       );
       players = await jakeReq.json();
@@ -388,7 +388,7 @@ export default class NFLData {
     let players = [];
 
     try {
-      let jakeReq = await fetch(
+      const jakeReq = await fetch(
         `http://xperimental.io:4200/api/v1/get/jakes_history/`
       );
       players = await jakeReq.json();
@@ -407,26 +407,26 @@ export default class NFLData {
 
   async getJakesUltimate(season) {
     let players = [];
-    let getSeason = season > 0 ? season : this.season;
+    const getSeason = season > 0 ? season : this.season;
     try {
-      let jakeReq = await fetch(
+      const jakeReq = await fetch(
         `http://xperimental.io:4200/api/v1/get/ultimate/${getSeason}`
       );
       players = await jakeReq.json();
 
       if (players && players.jakes && players.jakes.length > 0) {
         for (let p = 0; p < players.jakes.length; p++) {
-          let jake = players.jakes[p];
-          let positions = jake.positions.split(",");
-          let ordered = {
+          const jake = players.jakes[p];
+          const positions = jake.positions.split(",");
+          const ordered = {
             first: 0,
             second: 0,
             third: 0,
             fourth: 0
           };
 
-          for (let pos in positions) {
-            let position = positions[pos];
+          for (const pos in positions) {
+            const position = positions[pos];
             if (parseInt(position) === 1) {
               ordered.first++;
             }
@@ -460,10 +460,10 @@ export default class NFLData {
   async getPlayersByWeek(season = 0, week = 0) {
     let players = [];
 
-    let getSeason = season > 0 ? season : this.season;
-    let getWeek = week > 0 ? week : this.week;
+    const getSeason = season > 0 ? season : this.season;
+    const getWeek = week > 0 ? week : this.week;
     try {
-      let playerReq = await fetch(
+      const playerReq = await fetch(
         `http://xperimental.io:4200/api/v1/get/player_stats/${getSeason}/${getWeek}`
       );
       players = await playerReq.json();
@@ -481,9 +481,9 @@ export default class NFLData {
 
   async getPlayersBySeason(season = 0) {
     let players = [];
-    let getSeason = season > 0 ? season : this.season;
+    const getSeason = season > 0 ? season : this.season;
     try {
-      let playerReq = await fetch(
+      const playerReq = await fetch(
         `http://xperimental.io:4200/api/v1/get/player_stats/${getSeason}`
       );
       players = await playerReq.json();
@@ -502,10 +502,10 @@ export default class NFLData {
 
   async getTeamInfo(season = 2021) {
     try {
-      let team_req = await fetch(
+      const team_req = await fetch(
         `http://xperimental.io:4200/get/pff/teams/${season}`
       );
-      let team_json = team_req.json();
+      const team_json = team_req.json();
 
       return { success: true, teams: team_json };
     } catch (err) {
@@ -523,10 +523,10 @@ export default class NFLData {
       if (season > 0) selected_season = season;
       if (week > 0) selected_week = week;
 
-      let latestWeekResp = await fetch(
+      const latestWeekResp = await fetch(
         `http://xperimental.io:4200/api/v1/update/currentweek/${selected_season}/${selected_week}`
       );
-      let latestWeek = await latestWeekResp.json();
+      const latestWeek = await latestWeekResp.json();
       return latestWeek;
     } catch (err) {
       //eslint-disable-next-line

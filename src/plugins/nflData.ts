@@ -22,13 +22,13 @@ export default class NFLData {
   }
 
   async init() {
-    var self = this;
+    const self = this;
     self.week = await self.getCurrentWeek();
   }
 
   async getJakes(y = 0, w = 0) {
-    var self = this;
-    var players = [];
+    const self = this;
+    let players = [];
 
     await self.getHistoricalDataFromAPI(y, w);
     players = self.parseWeekData();
@@ -41,9 +41,9 @@ export default class NFLData {
   }
 
   async getCurrentWeek() {
-    let self = this;
-    let scheduleURL = "https://profootballapi.com/schedule";
-    let scheduleData = {
+    const self = this;
+    const scheduleURL = "https://profootballapi.com/schedule";
+    const scheduleData = {
       api_key: self.apiKey,
       year: self.season,
       season_type: "REG"
@@ -57,9 +57,9 @@ export default class NFLData {
       //console.log('starting season: ', year.toString());
       const schedule = await axios.post(scheduleURL, scheduleData);
       if (schedule.data.length > 0) {
-        let sdata = schedule.data;
+        const sdata = schedule.data;
         for (let g = 0; g < sdata.length; g++) {
-          let game = sdata[g];
+          const game = sdata[g];
           if (cWeek !== game.week) {
             cWeek = game.week;
           } else {
@@ -93,7 +93,7 @@ export default class NFLData {
       }
     }
 
-    var history = await axios.get(url);
+    const history = await axios.get(url);
     if (history.data.length > 0) {
       return history.data;
     }
@@ -102,13 +102,13 @@ export default class NFLData {
   }
 
   async getPlayerWin() {
-    let self = this;
+    const self = this;
     // See if we've already seen the team info for this player.
     if (
       self.winLossCache.length > 0 &&
       self.winLossCache.keys().indexOf(self.player.teamAbbr) >= 0
     ) {
-      let cache = self.winLossCache[self.player.teamAbbr];
+      const cache = self.winLossCache[self.player.teamAbbr];
       self.player.winLossInfo = {
         win: cache.win,
         score: cache.score
@@ -116,21 +116,21 @@ export default class NFLData {
     } else {
       // Nope, let's grab that players matchup and set the winLossInfo while also filling the cache with the opposing team
       // theoretically this will knock this down to 16 grabs instead of 30-32 (depending if byes)
-      let url = `https://api.fantasy.nfl.com/v1/players/advanced?teamAbbr=${
+      const url = `https://api.fantasy.nfl.com/v1/players/advanced?teamAbbr=${
         self.player.teamAbbr
       }&season=${self.season}&week=${self.week}&format=json&position=${
         self.position
       }`;
-      let response = await axios.get(url);
-      let gameInfo = response.data;
+      const response = await axios.get(url);
+      const gameInfo = response.data;
 
       if (gameInfo.QB.length > 0) {
         // Then we have something to look at.
-        for (var g = 0; g < gameInfo.QB.length; g++) {
-          let game = gameInfo.QB[g];
+        for (let g = 0; g < gameInfo.QB.length; g++) {
+          const game = gameInfo.QB[g];
           // lets just check that our players match, they may not
           if (game.gsisPlayerId === self.player.nflId) {
-            let status = game.status.split(",");
+            const status = game.status.split(",");
 
             self.player.winLossInfo = {
               win: status[0].trim().toLowerCase() === "win",
@@ -156,11 +156,11 @@ export default class NFLData {
   }
 
   parseWeekData() {
-    let self = this;
-    let players = [];
+    const self = this;
+    const players = [];
 
     for (let g = 0; g < self.weekGames.length; g++) {
-      let game = self.weekGames[g];
+      const game = self.weekGames[g];
       players.push(game.away.QB);
       players.push(game.home.QB);
     }
@@ -174,8 +174,8 @@ export default class NFLData {
       let lastjake = 0.0;
 
       for (let p = 0; p < players.length; p++) {
-        let player = players[p];
-        let lname = player.name.toLowerCase();
+        const player = players[p];
+        const lname = player.name.toLowerCase();
 
         try {
           player.image = require("../assets/players/" + lname + ".jpg");
@@ -226,9 +226,9 @@ export default class NFLData {
   }
 
   async getHistoricalDataFromAPI(year = 2007, week = 0) {
-    let self = this;
-    let scheduleURL = "http://xperimental.io:4200/api/v1/get/jakes/";
-    let scheduleData = {
+    const self = this;
+    const scheduleURL = "http://xperimental.io:4200/api/v1/get/jakes/";
+    const scheduleData = {
       api_key: self.apiKey,
       year: year,
       season_type: "REG"
@@ -245,7 +245,7 @@ export default class NFLData {
 
       //eslint-disable-next-line
       //console.log(year.toString() + ' schedule received.');
-      var weeks = await self.getWeeksFromSchedule(schedule.data);
+      const weeks = await self.getWeeksFromSchedule(schedule.data);
 
       //eslint-disable-next-line
       //console.log(year.toString() + ' game week data received and parsed.');
@@ -266,17 +266,17 @@ export default class NFLData {
 
   getPlayerDataFromGames(gameData = {}) {
     //console.log('gameData:', gameData);
-    let homePassing = gameData.home.stats.passing;
+    const homePassing = gameData.home.stats.passing;
     let homeQBId = 0;
 
-    let awayPassing = gameData.away.stats.passing;
+    const awayPassing = gameData.away.stats.passing;
     let awayQBId = 0;
 
     if (Object.keys(homePassing).length > 1) {
       // More than one potential QB.
       for (let hp = 0; hp < Object.keys(homePassing).length; hp++) {
-        let key = Object.keys(homePassing)[hp];
-        let passer = homePassing[key];
+        const key = Object.keys(homePassing)[hp];
+        const passer = homePassing[key];
         // kind of arbitrary...oh well
         if (passer.attempts > 5) {
           homeQBId = key;
@@ -290,8 +290,8 @@ export default class NFLData {
     if (Object.keys(awayPassing).length > 1) {
       // More than one potential QB.
       for (let ap = 0; ap < Object.keys(awayPassing).length; ap++) {
-        let key = Object.keys(awayPassing)[ap];
-        let passer = awayPassing[key];
+        const key = Object.keys(awayPassing)[ap];
+        const passer = awayPassing[key];
         // kind of arbitrary...oh well
         if (passer.attempts > 5) {
           awayQBId = key;
@@ -302,7 +302,7 @@ export default class NFLData {
       awayQBId = Object.keys(awayPassing)[0];
     }
 
-    let homeQB = {
+    const homeQB = {
       id: homeQBId,
       team: gameData.home.team,
       passing: {},
@@ -310,7 +310,7 @@ export default class NFLData {
       rushing: {}
     };
 
-    let awayQB = {
+    const awayQB = {
       id: awayQBId,
       team: gameData.away.team,
       passing: {},
@@ -361,12 +361,12 @@ export default class NFLData {
   }
 
   async getWeeksFromSchedule(incomingSchedule = []) {
-    var self = this;
-    var weeks = {};
+    const self = this;
+    const weeks = {};
 
     if (incomingSchedule.length > 0) {
       for (let i = 0; i < incomingSchedule.length; i++) {
-        var game = incomingSchedule[i];
+        const game = incomingSchedule[i];
 
         //eslint-disable-next-line
         //console.log('week ' + game.week.toString() + ': fetching game data');
@@ -377,9 +377,9 @@ export default class NFLData {
           weeks[game.week] = [];
         }
 
-        let gm = new NFLGame(game);
-        let gameDetailURL = "https://profootballapi.com/game";
-        let gameDetailData = {
+        const gm = new NFLGame(game);
+        const gameDetailURL = "https://profootballapi.com/game";
+        const gameDetailData = {
           api_key: self.apiKey,
           game_id: gm.id
         };
@@ -387,7 +387,7 @@ export default class NFLData {
         try {
           if (gameDetailData.game_id !== -1) {
             const gameDetail = await axios.post(gameDetailURL, gameDetailData);
-            let QBs = this.getPlayerDataFromGames(gameDetail.data);
+            const QBs = this.getPlayerDataFromGames(gameDetail.data);
 
             // eslint-disable-next-line
             //console.log('qb data', QBs);
